@@ -104,7 +104,7 @@ export default function LocationStage({ design, dispatch }) {
                 value={loc.imagery}
                 onChange={(e) => {
                   setImageryErr(null);
-                  dispatch({ type: 'setLocation', location: { imagery: e.target.value } });
+                  dispatch({ type: 'setLocation', location: { imagery: e.target.value, imageryChosen: true } });
                 }}
               >
                 {IMAGERY.map((s) => (

@@ -18,7 +18,7 @@ function design() {
   const sq = [[41.2, -73.7], [41.2001, -73.7], [41.2001, -73.7001], [41.2, -73.7001]];
   return {
     version: 1, id: 'd1', createdAt: new Date().toISOString(), stage: 'plants', bedCount: 1,
-    beds: [{ id: 'b1', number: 1, name: 'Bed 1', color: '#FF7A00', points: sq, closed: true, photo: null }],
+    beds: [{ id: 'b1', number: 1, name: 'Bed 1', color: '#FF7A00', points: sq, closed: true, sun: 'full', photo: null }],
     location: { address: '10 Elm St', lat: 41.20005, lng: -73.70005, zoom: 19, imagery: 'nys' },
     reviewed: true, photosDone: true, completed: false,
     zone: { zone: '6b', tempRange: '-5 to 0', zip: '10549', source: 'test', manual: false },
@@ -40,6 +40,27 @@ describe('PlantsStage', () => {
     expect(el.querySelector('[data-testid="plant-acer-rubrum"]')).toBeTruthy(); // zone 3–9 tree
     expect(el.querySelector('[data-testid="plant-lagerstroemia"]')).toBeNull(); // zone 7–9, excluded
     expect(el.textContent).toContain('1 × Hosta');
+    // Hosta in a full-sun bed trips the light check.
+    expect(el.querySelector('[data-testid="light-check"]').textContent).toContain('Hosta in Bed 1');
+    // Coverage line is shown for the bed.
+    expect(el.textContent).toMatch(/\d+% covered at maturity/);
+    // Filters: deer resistance removes hosta from the flower list.
+    await act(async () => {
+      el.querySelector('[role="tab"][aria-selected="false"]:nth-of-type(3)')?.click();
+    });
+    await act(async () => {
+      [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent.startsWith('Flowers')).click();
+    });
+    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeTruthy();
+    await act(async () => {
+      el.querySelector('[data-testid="filter-deer"]').click();
+    });
+    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeNull();
+    expect(el.querySelector('[data-testid="plant-helleborus"]')).toBeTruthy();
+    await act(async () => {
+      el.querySelector('[data-testid="filter-deer"]').click();
+      [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent.startsWith('Trees')).click();
+    });
     // Choosing a plant enters placing mode.
     await act(async () => {
       el.querySelector('[data-testid="plant-acer-rubrum"]').click();

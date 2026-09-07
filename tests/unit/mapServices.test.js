@@ -27,3 +27,24 @@ describe('imagery sources', () => {
     }
   });
 });
+
+import { rankSuggestions } from '../../src/lib/mapServices.js';
+
+describe('address suggestion ranking', () => {
+  it('puts New York first, then other US, then the world; addresses before places', () => {
+    const items = [
+      { label: 'Main St, London', regionRank: 2, isAddress: false },
+      { label: '5 Main St, Richmond, VA', regionRank: 1, isAddress: true },
+      { label: 'Main Street, Mount Kisco, NY', regionRank: 0, isAddress: false },
+      { label: '10 Main St, Mount Kisco, NY', regionRank: 0, isAddress: true },
+      { label: 'Main St, Ontario', regionRank: 2, isAddress: true },
+    ];
+    expect(rankSuggestions(items).map((i) => i.label)).toEqual([
+      '10 Main St, Mount Kisco, NY',
+      'Main Street, Mount Kisco, NY',
+      '5 Main St, Richmond, VA',
+      'Main St, Ontario',
+      'Main St, London',
+    ]);
+  });
+});

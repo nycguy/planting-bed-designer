@@ -1,4 +1,5 @@
 import { summarize } from './geometry.js';
+import { bestImageryFor } from './mapServices.js';
 
 export const STAGES = ['beds', 'location', 'sketch', 'review', 'photos', 'plants', 'complete'];
 export const STAGE_LABELS = {
@@ -32,7 +33,15 @@ export const DESIGN_VERSION = 1;
 
 export function upgradeDesign(d) {
   if (!d) return d;
-  return { ...d, photosDone: d.photosDone ?? (d.completed || d.stage === 'complete' || false), zone: d.zone ?? null, plants: Array.isArray(d.plants) ? d.plants : [] };
+  let location = d.location;
+  // Designs saved before New York State orthoimagery was added default to
+  // Esri. Move them to the best source for their location once; the user
+  // can still switch back from the imagery menu.
+  if (location && !location.imageryChosen) {
+    const best = bestImageryFor(location.lat, location.lng);
+    if (best !== location.imagery) location = { ...location, imagery: best };
+  }
+  return { ...d, location, photosDone: d.photosDone ?? (d.completed || d.stage === 'complete' || false), zone: d.zone ?? null, plants: Array.isArray(d.plants) ? d.plants : [] };
 }
 
 export function newDesign() {
@@ -69,6 +78,7 @@ export function makeBeds(count, existing = []) {
         color: BED_COLORS[i % BED_COLORS.length],
         points: [],
         closed: false,
+        sun: null, // 'full' | 'part' | 'shade' — set at Review
         photo: null, // { name, type, unavailable: bool, note: string } — image bytes live in IndexedDB
       },
     );
@@ -168,7 +178,21 @@ export function reducer(design, action) {
       return { ...design, plants: (design.plants || []).filter((p) => p.id !== action.id), completed: false };
     case 'clearPlants':
       return { ...design, plants: [], completed: false };
+    case 'setPlants': // undo / redo
+      return { ...design, plants: action.plants, completed: false };
+    case 'updatePlant':
+      return { ...design, plants: (design.plants || []).map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)) };
+    case 'setBedSun':
+      return { ...design, beds: design.beds.map((b) => (b.id === action.id ? { ...b, sun: action.sun } : b)) };
     default:
       return design;
   }
+}
+
+// Planted footprint per bed, as a share of bed area, using mature spread.
+export function bedCoverage(design, bed, footprint) {
+  const s = summarize(bed.points);
+  const list = (design.plants || []).filter((p) => p.bedId === bed.id && p.category !== 'existing');
+  const planted = list.reduce((a, p) => a + footprint(p), 0);
+  return { areaSqFt: s.areaSqFt, plantedSqFt: planted, ratio: s.areaSqFt > 0 ? planted / s.areaSqFt : 0, count: list.length };
 }

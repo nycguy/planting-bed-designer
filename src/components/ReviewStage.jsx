@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import MapView from './MapView.jsx';
 import { Modal, Notice } from './Shared.jsx';
 import { bedValid, designTotals } from '../lib/design.js';
+import { SUN_OPTIONS } from '../data/plants.js';
 import { summarize, fmtFt, fmtSqFt } from '../lib/geometry.js';
 
 export default function ReviewStage({ design, dispatch, onEditBed }) {
@@ -104,6 +105,23 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
                 Redraw bed
               </button>
             </div>
+            <div className="sunpick" role="group" aria-label={`Light in ${b.name}`}>
+              <span className="sunlabel">Light:</span>
+              {SUN_OPTIONS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`seg ${b.sun === o.id ? 'on' : ''}`}
+                  style={{ '--c': b.color }}
+                  aria-pressed={b.sun === o.id}
+                  title={o.hint}
+                  data-testid={`sun-${b.number}-${o.id}`}
+                  onClick={() => dispatch({ type: 'setBedSun', id: b.id, sun: b.sun === o.id ? null : o.id })}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </section>
         );
       })}
@@ -120,7 +138,7 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
         Beds are finished
       </button>
       <p className="hint" style={{ marginTop: 10 }}>
-        Next you will add one current photo of each bed. Photos are not requested until you confirm the beds are finished.
+        Tell the app how much sun each bed gets so the plant list can be matched to it. Photos come next and are optional.
       </p>
 
       {rename && (

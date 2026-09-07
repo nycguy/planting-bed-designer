@@ -12,6 +12,22 @@ export class GeocodeError extends Error {
   }
 }
 
+// The app is built for New York properties, so suggestions are biased
+// toward the state and ranked New York first, then the rest of the United
+// States, then everywhere else. The bias point is roughly the center of
+// New York's population (lower Hudson Valley); the scale keeps it soft so
+// out-of-state addresses still appear when typed.
+export const HOME_BIAS = { lat: 41.5, lng: -74.0 };
+
+function regionRank(p) {
+  const country = (p.countrycode || p.country || '').toString().toUpperCase();
+  const isUS = country === 'US' || country === 'UNITED STATES' || country === 'UNITED STATES OF AMERICA';
+  const state = (p.state || '').toString().toLowerCase();
+  if (isUS && (state === 'new york' || state === 'ny')) return 0;
+  if (isUS) return 1;
+  return 2;
+}
+
 function formatPhoton(f) {
   const p = f.properties || {};
   const line1 = [p.housenumber, p.street || p.name].filter(Boolean).join(' ');
@@ -24,7 +40,14 @@ function formatPhoton(f) {
     lng,
     postcode: p.postcode || null,
     isAddress: !!p.housenumber,
+    regionRank: regionRank(p),
   };
+}
+
+// Sort: New York, then other US, then world; complete street addresses
+// before places within each group. Exported for tests.
+export function rankSuggestions(items) {
+  return items.slice().sort((a, b) => a.regionRank - b.regionRank || Number(b.isAddress) - Number(a.isAddress));
 }
 
 export async function suggestAddresses(query, { signal, bias } = {}) {
@@ -32,12 +55,13 @@ export async function suggestAddresses(query, { signal, bias } = {}) {
   if (q.length < 3) return [];
   const url = new URL(PHOTON);
   url.searchParams.set('q', q);
-  url.searchParams.set('limit', '8');
+  url.searchParams.set('limit', '10');
   url.searchParams.set('lang', 'en');
-  if (bias) {
-    url.searchParams.set('lat', bias.lat);
-    url.searchParams.set('lon', bias.lng);
-  }
+  const b = bias || HOME_BIAS;
+  url.searchParams.set('lat', b.lat);
+  url.searchParams.set('lon', b.lng);
+  url.searchParams.set('location_bias_scale', '0.4');
+  url.searchParams.set('zoom', '9');
   let res;
   try {
     res = await fetch(url, { signal });
@@ -48,10 +72,7 @@ export async function suggestAddresses(query, { signal, bias } = {}) {
   if (res.status === 429) throw new GeocodeError('Too many searches in a short time. Wait a moment and try again.', 'limit');
   if (!res.ok) throw new GeocodeError('Address search failed. Try again.', 'network');
   const data = await res.json();
-  const items = (data.features || []).map(formatPhoton);
-  // Favor complete residential addresses (with house numbers).
-  items.sort((a, b) => Number(b.isAddress) - Number(a.isAddress));
-  return items;
+  return rankSuggestions((data.features || []).map(formatPhoton));
 }
 
 export async function geocodeOnce(query, { signal } = {}) {
@@ -60,6 +81,8 @@ export async function geocodeOnce(query, { signal } = {}) {
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('limit', '1');
   url.searchParams.set('addressdetails', '1');
+  // Soft preference for New York State (viewbox without 'bounded').
+  url.searchParams.set('viewbox', '-79.8,45.05,-71.8,40.45');
   let res;
   try {
     res = await fetch(url, { signal, headers: { Accept: 'application/json' } });

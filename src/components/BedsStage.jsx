@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { BED_COLORS } from '../lib/design.js';
 import { readDesignFile } from '../lib/designFile.js';
+import { listLibrary, removeFromLibrary } from '../lib/library.js';
+import { upgradeDesign } from '../lib/design.js';
 
 export default function BedsStage({ design, dispatch }) {
   const n = design.bedCount;
   const [openErr, setOpenErr] = useState(null);
+  const [library, setLibrary] = useState(() => listLibrary());
   // The file input is created on demand rather than rendered, so the page
   // never contains a file input before the Photos stage.
   const openSavedDesign = () => {
@@ -68,6 +71,45 @@ export default function BedsStage({ design, dispatch }) {
       <button type="button" className="btn btn-primary btn-block" onClick={() => dispatch({ type: 'confirmBeds' })}>
         {hasBeds ? 'Save and continue' : `Continue with ${n} bed${n === 1 ? '' : 's'}`}
       </button>
+      {library.length > 0 && (
+        <>
+          <div className="divider" />
+          <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>My designs</h2>
+          <ul className="librarylist" data-testid="library">
+            {library.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  className="libraryrow"
+                  onClick={() => {
+                    const d = upgradeDesign({ ...e.design, stage: 'review', completed: false });
+                    dispatch({ type: 'replace', design: d });
+                  }}
+                >
+                  <b>{e.name}</b>
+                  <small>
+                    {e.address ? `${e.address} · ` : ''}
+                    {e.beds} bed{e.beds === 1 ? '' : 's'}, {e.plants} plant{e.plants === 1 ? '' : 's'} · saved {new Date(e.savedAt).toLocaleDateString()}
+                  </small>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label={`Delete ${e.name}`}
+                  onClick={() => {
+                    if (window.confirm(`Delete “${e.name}” from my designs?`)) {
+                      removeFromLibrary(e.id);
+                      setLibrary(listLibrary());
+                    }
+                  }}
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <div className="divider" />
       <p className="hint">Have a design file saved from this app? Open it to continue where you left off. Photos are added again after Review.</p>
       <button type="button" className="btn btn-block" onClick={openSavedDesign}>

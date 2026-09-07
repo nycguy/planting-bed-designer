@@ -29,7 +29,7 @@ const ArcGISExportLayer = L.TileLayer.extend({
   },
 });
 import { distanceMeters, metersToFeet, midpoint, sideLengths, summarize, fmtSqFt, offsetMeters } from '../lib/geometry.js';
-import { plantById, categoryById } from '../data/plants.js';
+import { plantById, categoryById, YEARS_TO_MATURE } from '../data/plants.js';
 
 const isTouch = () => typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
@@ -98,6 +98,9 @@ const MapView = forwardRef(function MapView(
     onPreviewLength,
     plants = [],
     selectedPlantId = null,
+    placing = false,
+    growthYears = null, // null = mature; number = years after planting
+    showScale = false,
     onPlacePlant,
     onSelectPlant,
     onMovePlant,
@@ -167,6 +170,7 @@ const MapView = forwardRef(function MapView(
       scrollWheelZoom: interactive,
     });
     map.current = m;
+    if (showScale) L.control.scale({ imperial: true, metric: false, position: 'bottomleft', maxWidth: 140 }).addTo(m);
     layers.current = L.layerGroup().addTo(m);
     plantLayers.current = L.layerGroup().addTo(m);
     preview.current = L.polyline([], { color: '#fff', weight: 2, dashArray: '6 6', interactive: false });
@@ -412,6 +416,9 @@ const MapView = forwardRef(function MapView(
     if (!m || !g) return;
     g.clearLayers();
     const editable = mode === 'plant';
+    // While a plant is being placed, existing plants must not intercept
+    // taps: a new shrub can go inside a tree's canopy circle.
+    const selectable = editable && !placing;
     for (const pl of plants) {
       const info = plantById(pl.plantId);
       if (!info) continue;
@@ -424,14 +431,17 @@ const MapView = forwardRef(function MapView(
         opacity: 0.95,
         fillColor: cat.color,
         fillOpacity: selected ? 0.5 : 0.32,
-        interactive: editable,
+        interactive: selectable,
         bubblingMouseEvents: false,
       };
       let shape;
       if (info.category === 'flower') {
         shape = L.polygon(driftShape(center, pl.id), style);
       } else {
-        shape = L.circle(center, { ...style, radius: (info.spreadFt * 0.3048) / 2 });
+        const spreadFt = pl.spreadFt || info.spreadFt;
+        const yrs = YEARS_TO_MATURE[info.category] || 0;
+        const factor = growthYears == null || !yrs ? 1 : Math.max(0.12, Math.min(1, growthYears / yrs));
+        shape = L.circle(center, { ...style, radius: (spreadFt * factor * 0.3048) / 2, dashArray: info.category === 'existing' ? '6 6' : null });
       }
       shape.on('click', (e) => {
         L.DomEvent.stop(e);
@@ -476,7 +486,7 @@ const MapView = forwardRef(function MapView(
     };
     m.on('zoomend', relabel);
     return () => m.off('zoomend', relabel);
-  }, [plants, selectedPlantId, mode]);
+  }, [plants, selectedPlantId, mode, placing, growthYears]);
 
   // Re-measure after layout changes (bottom sheet expand/collapse).
   useEffect(() => {
@@ -490,6 +500,14 @@ const MapView = forwardRef(function MapView(
   return (
     <div className="mapwrap">
       <div ref={el} className="leaflet-container" role="application" aria-label="Aerial map of the property" />
+      {showScale && (
+        <div className="northarrow" aria-label="North is up" title="North is up">
+          <svg viewBox="0 0 24 32" width="22" height="30" aria-hidden="true">
+            <polygon points="12,2 19,26 12,21 5,26" fill="#fff" stroke="#000" strokeWidth="1.5" />
+          </svg>
+          N
+        </div>
+      )}
       {mode === 'draw' && isTouch() && <div className="crosshair" aria-hidden="true" />}
     </div>
   );

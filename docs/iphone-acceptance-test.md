@@ -57,3 +57,19 @@ Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column,
 34. Tap **Finish design and see the report**. The report shows the zone badge, the plants on the map, and a plant list table with quantities and mature sizes.
 35. Print preview: plant circles render on the map and the plant list table is on the page.
 36. Tap **Edit planting**; the Plants stage reopens with everything still placed. Refresh the page; plants survive.
+
+## Part D — Light, filters, growth, existing features, report extras (Safari)
+
+37. At Review, tap **Full sun** on Bed 1 and **Shade** on Bed 2. The buttons fill in the bed's color. Refresh; the choices persist.
+38. At Plants, a "For bed:" row shows a chip per bed. Tap Bed 2's chip: the Light filter jumps to Shade and the list shrinks. Tap **Any** to clear.
+39. Check **Deer resistant**: Hosta disappears from Flowers & bulbs; Hellebore stays. Check **Native** as well: the list shrinks again and every row shows both tags.
+40. Place a Hosta inside Bed 1 (full sun). A yellow "Light check" notice appears in the sheet naming Hosta and Bed 1.
+41. Plant rows show a small photo for most plants (needs a connection). Open ⓘ on one: a larger photo with a "Photo via Wikipedia" caption.
+42. Tap **Undo** (top left): the last placement disappears. **Redo** restores it. Undo is disabled when nothing is left to undo.
+43. With nothing selected, the **Mature / Year N** slider at the bottom scales tree and shrub circles down at Year 1 and back up at Mature. Flower drifts do not change.
+44. Tap **Existing**, pick **Existing tree**, set width to 30 ft, tap the map: a dashed gray circle. Tap Done, tap the circle, drag the width slider to 40 ft; it grows. It is not counted in "Placed so far" quantities.
+45. "Placed so far" shows a coverage percentage per bed. Place enough shrubs in a small bed to exceed 115%; the figure turns red with an "outgrow" note.
+46. Tap **Show bloom calendar**: one row per plant with a colored bar across its months, and a note naming months with nothing in bloom.
+47. Report: map has a scale bar (bottom left) and an N arrow (bottom right) and a legend line under it. Plant list has a Light column with a ⚠ on the mismatched Hosta. Coverage table, bloom calendar, and Materials table are present. Print preview shows all of them.
+48. Tap **Shopping list (CSV)**: a .csv downloads and opens in Numbers or Excel with quantity and suggested size columns.
+49. Tap **Save to my designs**, name it, Save. Start a new design; on the first screen a **My designs** list shows it. Tap it: the saved design opens at Review with every bed and plant. Tap ✕ on it, confirm; it is gone.

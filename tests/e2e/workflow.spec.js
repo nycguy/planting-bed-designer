@@ -25,6 +25,7 @@ async function mockServices(page) {
       },
     }),
   );
+  await page.route(/en\.wikipedia\.org/, (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{}' }));
   await page.route(/phzmapi\.org/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ zone: '6b', temperature_range: '-5 to 0', coordinates: { lat: 41.2, lon: -73.7 } }) }));
   await page.route(/nominatim\.openstreetmap\.org\/reverse/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ address: { postcode: '10549' } }) }));
   await page.route(/orthos\.its\.ny\.gov|arcgisonline\.com|nationalmap\.gov|maptiler\.com/, (route) => route.fulfill({ body: tilePng, contentType: 'image/png' }));
@@ -141,6 +142,8 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await page.getByRole('button', { name: /^Review/ }).click();
     await expect(page.getByText('Driveway Bed')).toBeVisible();
 
+    // Mark Bed 1 as full sun before finishing review.
+    await page.getByTestId('sun-1-full').click();
     // Photos appear only after "Beds are finished".
     await page.getByRole('button', { name: 'Beds are finished' }).click();
     await expect(page.getByRole('heading', { name: /add a current photo/i })).toBeVisible();
@@ -180,11 +183,37 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await expect(page.locator('.map-banner')).toContainText('(2 placed)');
     await page.getByRole('button', { name: 'Done' }).click();
     await expect(page.locator('.sheet-handle')).toContainText('2 placed');
+    // Undo removes the last one; redo brings it back.
+    await page.getByTestId('undo').click();
+    await expect(page.locator('.sheet-handle')).toContainText('1 placed');
+    await page.getByTestId('redo').click();
+    await expect(page.locator('.sheet-handle')).toContainText('2 placed');
+    // Light filter and coverage readout are present.
+    await page.getByRole('tab', { name: 'Flowers & bulbs' }).click();
+    await page.getByTestId('filter-sun-shade').click();
+    await expect(page.getByTestId('plant-hosta')).toBeVisible();
+    await expect(page.getByTestId('plant-echinacea')).toHaveCount(0);
+    await page.getByTestId('filter-deer').click();
+    await expect(page.getByTestId('plant-hosta')).toHaveCount(0);
+    await expect(page.locator('.plantsummary')).toContainText('% covered at maturity');
+    // Maturity slider changes the banner.
+    await page.getByTestId('growth-slider').fill('0');
+    await expect(page.locator('.map-banner')).toContainText('year 1');
 
     // Complete.
     await page.getByTestId('finish-design').click();
     await expect(page.getByRole('heading', { name: 'Design complete' })).toBeVisible();
-    await expect(page.locator('.schedule')).toContainText('Panicle Hydrangea');
+    await expect(page.locator('.schedule').first()).toContainText('Panicle Hydrangea');
+    await expect(page.getByRole('heading', { name: 'Materials' })).toBeVisible();
+    await expect(page.getByTestId('bloom-calendar')).toBeVisible();
+    const csv = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Shopping list (CSV)' }).click();
+    expect((await csv).suggestedFilename()).toMatch(/\.csv$/);
+    // Save to library and see it on the first screen later.
+    await page.getByRole('button', { name: 'Save to my designs' }).click();
+    await page.getByLabel('Name').fill('Test yard v1');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText('Saved as “Test yard v1”')).toBeVisible();
     await expect(page.getByTestId('complete-photo-1')).toBeVisible();
     await expect(page.getByTestId('complete-photo-2')).toBeVisible();
     await expect(page.getByTestId('complete-bed-1')).toContainText('25.0 ft');
