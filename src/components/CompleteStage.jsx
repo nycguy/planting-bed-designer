@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import MapView from './MapView.jsx';
 import { Modal } from './Shared.jsx';
 import { designTotals } from '../lib/design.js';
@@ -9,6 +9,7 @@ import { saveDesignFile } from '../lib/designFile.js';
 import { plantById, categoryById, CATEGORIES, sunCompatible, SUN_OPTIONS, SUN_LABELS, footprintSqFt } from '../data/plants.js';
 import { BloomCalendar } from './PlantsStage.jsx';
 import { PlantHover } from './PlantPhoto.jsx';
+import Visualize from './Visualize.jsx';
 import { bedCoverage } from '../lib/design.js';
 import { saveToLibrary } from '../lib/library.js';
 import { zoneLabel } from '../lib/zones.js';
@@ -145,6 +146,7 @@ export default function CompleteStage({ design, dispatch, onEditBed, onAddBed, o
         </p>
       )}
 
+      <Visualize design={design} />
       <PlantSchedule design={design} dispatch={dispatch} />
       <Materials design={design} />
 

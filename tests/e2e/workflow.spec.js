@@ -206,6 +206,11 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await expect(page.getByRole('heading', { name: 'Design complete' })).toBeVisible();
     await expect(page.locator('.schedule').first()).toContainText('Panicle Hydrangea');
     await expect(page.getByRole('heading', { name: 'Materials' })).toBeVisible();
+    // Plan drawing renders with a key.
+    await page.getByTestId('tab-plan').click();
+    await expect(page.locator('#plan-svg')).toBeVisible();
+    await expect(page.locator('#plan-svg')).toContainText('Plant key');
+    await page.getByTestId('tab-plan').click();
     await expect(page.getByTestId('bloom-calendar')).toBeVisible();
     const csv = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Shopping list (CSV)' }).click();

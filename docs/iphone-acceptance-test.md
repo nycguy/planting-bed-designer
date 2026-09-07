@@ -76,3 +76,11 @@ Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column,
 
 50. A **Grasses** tab sits between Shrubs and Flowers with six ornamental grasses and sedges; they draw as straw-colored circles at mature spread.
 51. On a desktop browser, hovering a plant thumbnail shows a larger photo beside it; moving away hides it. Esc cancels placing or clears the selection; Delete/Backspace removes the selected plant; Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z undo and redo.
+
+## Part E — Plan drawing and 3D view
+
+52. Report → **See the design** → **Plan drawing**. Beds show as mulch-textured shapes in their colors with name and area; each plant is a canopy symbol sized to its mature spread with a number; the key at right lists quantity, name, botanical name, and size for each number; a scale bar and north arrow are present.
+53. Change Age to Year 3: symbols shrink. Change Month to a month with bloom: flowering shrubs and perennials recolor. Download PNG and SVG both produce files that open.
+54. **3D view**: a scene appears with the aerial photo on the ground (or plain green with a note if the imagery server blocks it), beds as mulch shapes, trees as crowns on trunks, conifers as cones, shrubs as mounds, grasses as tufts, flowers as low mats. Drag orbits, pinch zooms. **Eye level** puts the camera at 5.5 ft; **Top** looks straight down.
+55. Age and Month controls resize and recolor plants in 3D. **Save image** downloads a PNG of the current view.
+56. From the Plants stage, the **3D** button (top right, when plants are placed and nothing is selected) opens the same view over the map; **Back to editing** returns with the design unchanged.

@@ -14,7 +14,7 @@ Seven guided stages, shown in the bar at the top:
 4. **Review** — a map fitted to all beds, each filled in its color with a bed-number and area label, then every bed's numbers and combined totals. Set each bed's light (full sun, part sun, shade) here; the plant list uses it. "Beds are finished" is the only way forward.
 5. **Photos** — optional. One card per bed with *Choose photo* and *Take photo*. Progress ("2 of 4 bed photos added"). A bed can be marked "Photo unavailable" with a note, or the stage skipped entirely.
 6. **Plants** — the planting design. Pick a category (Trees, Shrubs, Grasses, Flowers, or Existing for things already in the yard), narrow the list by light, native status, and deer resistance (on by default) on top of the zone filter, choose a plant, and tap the map to place it — one per tap. Trees and shrubs draw as circles at mature spread; flowers and bulbs as roughly 18-inch irregular drifts; existing trees, shrubs, and hardscape in dashed gray at a width you set. Circles may overlap. Tap a placed plant (when not placing) to move or remove it. Undo and redo. A maturity slider shows the design at year 1, 3, 5, 10, or full size. The sheet lists what is placed in each bed with a coverage percentage at maturity, flags plants whose light needs do not match the bed, and shows a bloom calendar. Plant rows and the detail dialog carry a reference photo from Wikipedia.
-7. **Complete** — the report (with **Add another bed**, which returns to Sketch for the new bed and then back through Review): address, hardiness zone, plan map with scale bar, north arrow, and legend, totals, a plant list by bed with quantities, mature sizes, and light checks, coverage per bed, a bloom calendar, a materials table (mulch at 2 and 3 in., topsoil at 4 in., edging length, with bag counts), and a section per bed with photo and measurements. Print, Save as PDF, Save design file, Export design data (GeoJSON), Shopping list (CSV with suggested container sizes), Save to my designs, edit anything, or start over. Saved designs appear under **My designs** on the first screen, so one yard can hold several versions.
+7. **Complete** — the report includes **See the design**: a **Plan drawing** (true-scale SVG with mulched bed shapes, stylized canopy symbols at mature spread or a chosen age, bloom color for the chosen month, keyed plant list, scale bar, north arrow; download as PNG or SVG) and a **3D view** (orbit, eye-level, and top presets; textured with the aerial imagery when the server permits; age and month controls; save a snapshot). Both are exact to the bed geometry, plant positions, and sizes; plant shapes are stylized. The 3D view is also one tap away from the Plants stage. Beyond that, the report (with **Add another bed**, which returns to Sketch for the new bed and then back through Review): address, hardiness zone, plan map with scale bar, north arrow, and legend, totals, a plant list by bed with quantities, mature sizes, and light checks, coverage per bed, a bloom calendar, a materials table (mulch at 2 and 3 in., topsoil at 4 in., edging length, with bag counts), and a section per bed with photo and measurements. Print, Save as PDF, Save design file, Export design data (GeoJSON), Shopping list (CSV with suggested container sizes), Save to my designs, edit anything, or start over. Saved designs appear under **My designs** on the first screen, so one yard can hold several versions.
 
 Photo controls do not exist in the DOM until Review is confirmed.
 
@@ -34,6 +34,7 @@ Photo controls do not exist in the DOM until Review is confirmed.
 | Hardiness zone | `phzmapi.org/{zip}.json` — static mirror of the 2023 USDA PHZM by ZIP code | Free, no key. ZIP comes from the geocoder or a Nominatim reverse lookup. If either step fails the user picks a zone from a list |
 | Plant photos | Wikipedia page summaries (REST API, CORS, no key), looked up by genus + species and cached on device | The only free, keyless, reliably licensed source for a photo per botanical name. Missing photos simply do not render |
 | Plant reference | Bundled list of 147 landscape plants (47 trees, 46 shrubs, 6 ornamental grasses, 48 perennials/bulbs) in `src/data/plants.js` with zone range, mature spread and height, light, and notes | No free plant API offers zone and size data without a key and daily caps. A bundled list works offline and can be edited in one file. Ranges are typical nursery figures, not guarantees |
+| Renderings | Plan drawing as inline SVG; 3D view with three.js (lazy-loaded, ~0.5 MB only when opened) | SVG prints sharp and exports without a server. three.js is the standard browser 3D library; loading it on demand keeps the main app under 450 kB |
 | Tests | Vitest (geometry, model, transfer, mount smoke) + Playwright (desktop, iPhone 13 portrait and landscape) | Playwright can drive the drawing and file inputs; see the honest limits below |
 
 ## Desktop use
@@ -123,11 +124,12 @@ public/               favicon
 src/
   App.jsx             stage routing, persistence, transfer, start-new, offline banner
   components/         BedsStage, LocationStage, SketchStage, ReviewStage, PhotosStage, CompleteStage, MapView, Shared
-  components/         …plus PlantsStage (planting design) and ZonePanel (hardiness zone)
+  components/         …plus PlantsStage, ZonePanel, Visualize, PlanDrawing (SVG plan), Scene3D (three.js)
   data/plants.js      plant reference list
   lib/
     zones.js          USDA hardiness zone lookup
     library.js        named designs kept on device
+    scene.js          local metric frame, plant forms and colors for renderings
     plantPhotos.js    Wikipedia photo lookup with cache
     designFile.js     save / open design as a JSON file
     geometry.js       distances, area, perimeter, side-length editing, self-intersection
@@ -145,7 +147,7 @@ tests/
 
 ## Testing status — read this before trusting it
 
-- `npm run test:unit`: 49 tests, passing (geometry math, side-length editing semantics, stage gating, status derivation, transfer round-trip, in-app browser detection, App mounts on the Beds stage with no photo inputs).
+- `npm run test:unit`: 56 tests, passing (geometry math, side-length editing semantics, stage gating, status derivation, transfer round-trip, in-app browser detection, App mounts on the Beds stage with no photo inputs).
 - `npm run test:e2e`: covers the full 18-step primary workflow from the requirements, the transfer link into a fresh browser context, start-new confirmation, and mobile layout checks on iPhone 13 portrait and landscape emulation. **These were authored but could not be executed in the environment where this repository was generated (browser download blocked). They run in the CI workflow on first push; fix any selector drift there.**
 - **The physical iPhone test has not been performed.** Automated `setInputFiles` does not exercise the Apple Photos sheet. Follow `docs/iphone-acceptance-test.md` on a real device before considering the photo requirement met.
 

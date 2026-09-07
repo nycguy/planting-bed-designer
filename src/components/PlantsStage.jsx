@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView from './MapView.jsx';
 import ZonePanel from './ZonePanel.jsx';
 import PlantPhoto, { PlantHover } from './PlantPhoto.jsx';
+import Visualize from './Visualize.jsx';
 import { Modal } from './Shared.jsx';
 import { CATEGORIES, categoryById, plantById, searchPlants, SUN_LABELS, SUN_OPTIONS, sunCompatible, footprintSqFt, MONTHS } from '../data/plants.js';
 import { cryptoId, bedCoverage } from '../lib/design.js';
@@ -35,6 +36,7 @@ export default function PlantsStage({ design, dispatch }) {
   const [detail, setDetail] = useState(null);
   const [growthIdx, setGrowthIdx] = useState(GROWTH_STOPS.length - 1);
   const [showBloom, setShowBloom] = useState(false);
+  const [showViz, setShowViz] = useState(null); // 'plan' | '3d' | null
 
   // Undo / redo over the plants array.
   const past = useRef([]);
@@ -201,6 +203,11 @@ export default function PlantsStage({ design, dispatch }) {
         <button type="button" className="mapbtn" onClick={() => mapRef.current?.fitPoints(design.beds.flatMap((b) => b.points))} aria-label="Zoom to all beds" title="Zoom to all beds">
           ⤢
         </button>
+        {plants.length > 0 && !placing && !selected && (
+          <button type="button" className="mapbtn text" onClick={() => setShowViz('3d')} title="See the design in 3D" data-testid="open-3d">
+            3D
+          </button>
+        )}
         {(placing || selected) && (
           <button
             type="button"
@@ -455,6 +462,19 @@ export default function PlantsStage({ design, dispatch }) {
         </div>
       </aside>
 
+      {showViz && (
+        <div className="vizoverlay" role="dialog" aria-label="Visualize the design">
+          <div className="vizoverlay-bar">
+            <b>See the design</b>
+            <button type="button" className="btn btn-sm" onClick={() => setShowViz(null)}>
+              Back to editing
+            </button>
+          </div>
+          <div className="vizoverlay-body">
+            <Visualize design={design} defaultTab={showViz} />
+          </div>
+        </div>
+      )}
       {detail && (
         <Modal title={detail.name} onClose={() => setDetail(null)}>
           {detail.category !== 'existing' && <PlantPhoto plant={detail} wide />}
