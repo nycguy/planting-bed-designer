@@ -25,8 +25,22 @@ const hasHover = () => typeof window !== 'undefined' && window.matchMedia?.('(ho
 export function PlantHover({ plant, children, className, style, as: Tag = 'span', ...rest }) {
   const photo = usePhoto(plant);
   const [pos, setPos] = useState(null);
+  // Show the small thumbnail at once (it is already cached by the row), and
+  // swap in the larger rendition only after it has finished loading.
+  const [largeReady, setLargeReady] = useState(false);
+  useEffect(() => {
+    setLargeReady(false);
+    if (!pos || !photo?.large || photo.large === photo.src) return;
+    let alive = true;
+    const im = new Image();
+    im.onload = () => alive && setLargeReady(true);
+    im.src = photo.large;
+    return () => {
+      alive = false;
+    };
+  }, [pos, photo?.large, photo?.src]);
   if (!plant || plant.category === 'existing') return <Tag className={className} style={style} {...rest}>{children}</Tag>;
-  const large = photo ? photo.large || photo.src : null;
+  const shown = photo ? (largeReady ? photo.large : photo.src) : null;
   const onEnter = (e) => {
     if (!hasHover()) return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -39,15 +53,8 @@ export function PlantHover({ plant, children, className, style, as: Tag = 'span'
       {children}
       {pos && (
         <span className="plantpreview" style={{ left: pos.x, top: pos.y }} role="presentation">
-          {large ? (
-            <img
-              src={large}
-              alt=""
-              onError={(e) => {
-                // Fall back to the small thumbnail if the larger size fails.
-                if (photo?.src && e.currentTarget.src !== photo.src) e.currentTarget.src = photo.src;
-              }}
-            />
+          {shown ? (
+            <img src={shown} alt="" referrerPolicy="no-referrer" className={largeReady ? '' : 'small'} />
           ) : (
             <span className="plantpreview-empty">{photo === undefined ? 'Loading photo…' : 'No photo available'}</span>
           )}
@@ -69,7 +76,7 @@ export default function PlantPhoto({ plant, size = 44, wide = false, hover = tru
     if (!photo) return null;
     return (
       <figure className="plantfig">
-        <img src={photo.src} alt={`${plant.name} (${plant.botanical})`} loading="lazy" />
+        <img src={photo.large || photo.src} alt={`${plant.name} (${plant.botanical})`} loading="lazy" referrerPolicy="no-referrer" />
         <figcaption>
           Photo via{' '}
           <a href={photo.page} target="_blank" rel="noreferrer">
@@ -79,7 +86,7 @@ export default function PlantPhoto({ plant, size = 44, wide = false, hover = tru
       </figure>
     );
   }
-  const img = photo ? <img src={photo.src} alt="" loading="lazy" width={size} height={size} /> : null;
+  const img = photo ? <img src={photo.src} alt="" loading="lazy" width={size} height={size} referrerPolicy="no-referrer" /> : null;
   if (!hover) {
     return (
       <span className="plantthumb" style={{ width: size, height: size }} aria-hidden="true">

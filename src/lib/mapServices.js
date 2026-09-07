@@ -157,7 +157,9 @@ export const IMAGERY = [
     id: 'maine',
     type: 'arcgis-image',
     name: 'Maine Orthoimagery (GeoLibrary)',
-    url: 'https://gis.maine.gov/arcgis/rest/services/imageryBaseMapsEarthCover/orthoRegional/ImageServer',
+    // gis.maine.gov/image is the GeoLibrary's current image server (ArcGIS 11.x);
+    // the older /arcgis host has been intermittently unavailable.
+    url: 'https://gis.maine.gov/image/rest/services/Regional/orthoRegional/ImageServer',
     // Maine GeoLibrary's aggregated statewide orthoimagery: 3-inch (7.5 cm)
     // leaf-off imagery flown on a rotating regional schedule (2012–2020+),
     // 4-band; the first three bands are natural color.

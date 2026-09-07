@@ -375,7 +375,7 @@ export default function PlantsStage({ design, dispatch }) {
                       )}
                     </span>
                     <span className="plantmeta">
-                      {p.category === 'flower' ? `${p.heightFt} ft tall` : `${p.spreadFt} ft wide`}
+                      {p.category === 'existing' ? `${p.spreadFt} ft wide` : `${p.heightFt} ft H · ${p.spreadFt} ft W`}
                       {p.category !== 'existing' && (
                         <small>
                           Zones {p.zoneMin}–{p.zoneMax}

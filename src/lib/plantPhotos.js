@@ -2,7 +2,7 @@
 // no key). Looked up by genus + species from the botanical name. Results are
 // cached in memory and localStorage so a plant is fetched once per device.
 
-const CACHE_KEY = 'pbd:plantphotos:v2'; // v2 adds the large size
+const CACHE_KEY = 'pbd:plantphotos:v3'; // v3: large size via Special:FilePath
 const mem = new Map();
 let disk = null;
 function loadDisk() {
@@ -36,6 +36,19 @@ export function lookupTitle(botanical) {
   return parts.slice(0, 2).join(' ');
 }
 
+// Build a ~640 px rendition. Rewriting the "NNNpx-" segment of a thumbnail
+// URL is fragile (it fails when the original is narrower, and for some file
+// types), so ask the wiki's Special:FilePath redirector instead, which
+// clamps the width to the original and picks the right thumbnail path.
+export function largeUrl(thumbSrc, originalSrc, width = 640) {
+  const src = originalSrc || thumbSrc;
+  if (!src) return null;
+  const m = src.match(/upload\.wikimedia\.org\/wikipedia\/(commons|en)\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+?)(?:\/\d+px-[^/]+)?$/i);
+  if (!m) return thumbSrc || src;
+  const host = m[1] === 'commons' ? 'commons.wikimedia.org' : 'en.wikipedia.org';
+  return `https://${host}/wiki/Special:FilePath/${m[2]}?width=${width}`;
+}
+
 export async function plantPhoto(plant, { signal } = {}) {
   if (!plant) return null;
   const title = plant.wikipediaTitle || lookupTitle(plant.botanical) || plant.name;
@@ -55,10 +68,7 @@ export async function plantPhoto(plant, { signal } = {}) {
         // Wikipedia thumbnail URLs can be re-sized by changing the "NNNpx-"
         // segment, but only down from the original; asking for more than the
         // original width returns an error, so cap at the original.
-        const origW = j.originalimage?.width || 0;
-        let large = src;
-        if (/\/\d+px-/.test(src) && origW >= 640) large = src.replace(/\/\d+px-/, '/640px-');
-        else if (j.originalimage?.source && origW > 0 && origW < 640) large = j.originalimage.source;
+        const large = largeUrl(src, j.originalimage?.source) || src;
         result = { src, large, page: j.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`, title: j.title || title };
       }
     }

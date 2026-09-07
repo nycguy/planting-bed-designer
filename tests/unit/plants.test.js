@@ -147,3 +147,16 @@ describe('Wikipedia title lookup', () => {
     expect(lookupTitle('Rosa (Knock Out, Drift, Oso Easy)')).toBe('Rosa');
   });
 });
+
+import { largeUrl } from '../../src/lib/plantPhotos.js';
+describe('large photo URL', () => {
+  it('uses the wiki file redirector with a width, for commons and en-hosted files', () => {
+    expect(largeUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Pennisetum_alopecuroides_Hameln.jpg/320px-Pennisetum_alopecuroides_Hameln.jpg', 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Pennisetum_alopecuroides_Hameln.jpg')).toBe(
+      'https://commons.wikimedia.org/wiki/Special:FilePath/Pennisetum_alopecuroides_Hameln.jpg?width=640',
+    );
+    expect(largeUrl('https://upload.wikimedia.org/wikipedia/en/thumb/a/ab/Foo_bar.JPG/320px-Foo_bar.JPG', null)).toBe('https://en.wikipedia.org/wiki/Special:FilePath/Foo_bar.JPG?width=640');
+    expect(largeUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Tree.tif/lossy-page1-320px-Tree.tif.jpg', 'https://upload.wikimedia.org/wikipedia/commons/1/1f/Tree.tif')).toBe('https://commons.wikimedia.org/wiki/Special:FilePath/Tree.tif?width=640');
+    // Unknown hosts fall back to the thumbnail itself.
+    expect(largeUrl('https://example.com/x.jpg', null)).toBe('https://example.com/x.jpg');
+  });
+});
