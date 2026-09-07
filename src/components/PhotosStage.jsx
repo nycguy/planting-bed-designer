@@ -172,15 +172,15 @@ export default function PhotosStage({ design, dispatch, onOpenInSafari }) {
       <button
         type="button"
         className="btn btn-primary btn-block"
-        disabled={!allPhotosDone(design)}
+        data-testid="photos-continue"
         onClick={() => {
-          dispatch({ type: 'setCompleted', value: true });
-          dispatch({ type: 'setStage', stage: 'complete' });
+          dispatch({ type: 'setPhotosDone', value: true });
+          dispatch({ type: 'setStage', stage: 'plants' });
         }}
       >
-        Complete design
+        {allPhotosDone(design) ? 'Continue to planting design' : done > 0 ? 'Continue with the photos I have' : 'Skip photos and design the beds'}
       </button>
-      {!allPhotosDone(design) && <p className="hint">Add a photo, or mark it unavailable, for every bed to finish.</p>}
+      <p className="hint">Photos are optional. You can come back and add them any time from the report.</p>
 
       {unavail && (
         <Modal title="Photo unavailable" onClose={() => setUnavail(null)}>

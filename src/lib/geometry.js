@@ -139,3 +139,23 @@ export function summarize(points) {
 
 export const fmtFt = (ft) => `${ft.toFixed(1)} ft`;
 export const fmtSqFt = (sf) => `${Math.round(sf).toLocaleString()} sq ft`;
+
+// Ray-casting point-in-polygon on [lat, lng] pairs.
+export function pointInPolygon(pt, poly) {
+  if (!poly || poly.length < 3) return false;
+  const [y, x] = pt;
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [yi, xi] = poly[i];
+    const [yj, xj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+// Offset a [lat, lng] by east/north meters.
+export function offsetMeters([lat, lng], east, north) {
+  const dLat = north / 111320;
+  const dLng = east / (111320 * Math.cos((lat * Math.PI) / 180));
+  return [lat + dLat, lng + dLng];
+}

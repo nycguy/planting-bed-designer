@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import MapView from './MapView.jsx';
+import ZonePanel from './ZonePanel.jsx';
 import { Notice } from './Shared.jsx';
-import { suggestAddresses, geocodeOnce, IMAGERY, DEFAULT_IMAGERY, imageryById } from '../lib/mapServices.js';
+import { suggestAddresses, geocodeOnce, IMAGERY, imageryById, imageryCovers, bestImageryFor } from '../lib/mapServices.js';
 
 const START_CENTER = [39.5, -98.35]; // continental US
 
@@ -45,8 +46,10 @@ export default function LocationStage({ design, dispatch }) {
     const address = [item.label, item.detail].filter(Boolean).join(', ');
     dispatch({
       type: 'setLocation',
-      location: { address, lat: item.lat, lng: item.lng, zoom: 19, imagery: loc?.imagery || DEFAULT_IMAGERY, marker: [item.lat, item.lng] },
+      location: { address, lat: item.lat, lng: item.lng, zoom: 19, imagery: loc?.imagery && imageryCovers(imageryById(loc.imagery), item.lat, item.lng) ? loc.imagery : bestImageryFor(item.lat, item.lng), marker: [item.lat, item.lng], postcode: item.postcode || null },
     });
+    // A new address means a new zone.
+    dispatch({ type: 'setZone', zone: null });
     setItems([]);
     setSearching(false);
     setQuery(address);
@@ -118,6 +121,7 @@ export default function LocationStage({ design, dispatch }) {
           <div className="sheet">
             <div className="sheet-body" style={{ paddingTop: 12 }}>
               <p style={{ margin: '0 0 4px', fontWeight: 600 }}>{loc.address}</p>
+              <ZonePanel design={design} dispatch={dispatch} compact />
               <p className="hint">Pan and zoom until your house and yard fill the screen. The marker shows where the address was found; the map itself is what matters.</p>
               {imageryErr && (
                 <Notice kind="warn" title="Imagery is not loading">

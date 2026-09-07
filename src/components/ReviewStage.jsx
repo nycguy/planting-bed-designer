@@ -12,7 +12,9 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
   const allPts = design.beds.flatMap((b) => b.points);
   const incomplete = design.beds.filter((b) => !bedValid(b));
   useEffect(() => {
-    if (allPts.length) mapRef.current?.fitPoints(allPts);
+    if (!allPts.length) return;
+    const id = requestAnimationFrame(() => mapRef.current?.fitPoints(allPts));
+    return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -61,6 +61,6 @@ export function Modal({ title, children, onClose }) {
 }
 
 export function StatusPill({ status }) {
-  const cls = status === 'Complete' || status === 'Reviewed' || status === 'Ready for Review' ? 'ok' : status === 'Photo Needed' || status === 'In Progress' ? 'warn' : '';
+  const cls = status === 'Complete' || status === 'Reviewed' || status === 'Ready for Review' ? 'ok' : status === 'Photo Optional' || status === 'In Progress' ? 'warn' : '';
   return <span className={`status-pill ${cls}`}>{status}</span>;
 }

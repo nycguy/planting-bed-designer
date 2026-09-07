@@ -27,6 +27,7 @@ jobs:
       - run: npm run test:unit
       - run: npm run build
         env:
+          # Optional: add VITE_MAPTILER_KEY as a repository secret to enable MapTiler imagery.
           VITE_MAPTILER_KEY: ${{ secrets.VITE_MAPTILER_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:

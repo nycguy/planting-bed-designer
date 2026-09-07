@@ -40,6 +40,18 @@ describe('design reducer', () => {
     expect(maxReachableStage(d)).toBe('review');
     d = reducer(d, { type: 'setReviewed', value: true });
     expect(maxReachableStage(d)).toBe('photos');
+    // Photos are optional; moving past them opens the planting design.
+    d = reducer(d, { type: 'setPhotosDone', value: true });
+    expect(maxReachableStage(d)).toBe('plants');
+    expect(canEnterStage(d, 'complete')).toBe(false);
+    d = reducer(d, { type: 'setCompleted', value: true });
+    expect(maxReachableStage(d)).toBe('complete');
+    // Adding a plant reopens the design until it is finished again.
+    d = reducer(d, { type: 'addPlant', plant: { id: 'p1', plantId: 'hosta', category: 'flower', lat: 0, lng: 0, bedId: null } });
+    expect(maxReachableStage(d)).toBe('plants');
+    expect(d.plants).toHaveLength(1);
+    d = reducer(d, { type: 'removePlant', id: 'p1' });
+    expect(d.plants).toHaveLength(0);
     // Geometry edits un-review the design.
     const edited = reducer(d, { type: 'updateBed', id: d.beds[0].id, patch: { points: tri.slice() } });
     expect(edited.reviewed).toBe(false);
@@ -53,7 +65,7 @@ describe('design reducer', () => {
     d = reducer(d, { type: 'updateBed', id: d.beds[0].id, patch: { points: tri, closed: true } });
     expect(bedStatus(d.beds[0], d)).toBe('Ready for Review');
     d = reducer(d, { type: 'setReviewed', value: true });
-    expect(bedStatus(d.beds[0], d)).toBe('Photo Needed');
+    expect(bedStatus(d.beds[0], d)).toBe('Photo Optional');
     d = reducer(d, { type: 'updateBed', id: d.beds[0].id, patch: { photo: { name: 'a.jpg' } } });
     expect(bedStatus(d.beds[0], d)).toBe('Complete');
   });

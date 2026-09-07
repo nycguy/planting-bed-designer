@@ -1,12 +1,13 @@
 import { summarize } from './geometry.js';
 
-export const STAGES = ['beds', 'location', 'sketch', 'review', 'photos', 'complete'];
+export const STAGES = ['beds', 'location', 'sketch', 'review', 'photos', 'plants', 'complete'];
 export const STAGE_LABELS = {
   beds: 'Beds',
   location: 'Location',
   sketch: 'Sketch',
   review: 'Review',
   photos: 'Photos',
+  plants: 'Plants',
   complete: 'Complete',
 };
 
@@ -29,6 +30,11 @@ export const BED_COLORS = [
 
 export const DESIGN_VERSION = 1;
 
+export function upgradeDesign(d) {
+  if (!d) return d;
+  return { ...d, photosDone: d.photosDone ?? (d.completed || d.stage === 'complete' || false), zone: d.zone ?? null, plants: Array.isArray(d.plants) ? d.plants : [] };
+}
+
 export function newDesign() {
   return {
     version: DESIGN_VERSION,
@@ -39,7 +45,10 @@ export function newDesign() {
     beds: [],
     location: null, // { address, lat, lng, zoom, imagery }
     reviewed: false,
+    photosDone: false, // user moved past the optional Photos stage
     completed: false,
+    zone: null, // { zone, tempRange, zip, source, fetchedAt, manual }
+    plants: [], // { id, plantId, category, lat, lng, bedId }
   };
 }
 
@@ -69,7 +78,7 @@ export function makeBeds(count, existing = []) {
 
 export function bedStatus(bed, design) {
   if (bed.photo?.unavailable || (bed.photo && !bed.photo.unavailable)) return 'Complete';
-  if (design.reviewed && bed.closed && bed.points.length >= 3) return 'Photo Needed';
+  if (design.reviewed && bed.closed && bed.points.length >= 3) return design.photosDone ? 'Reviewed' : 'Photo Optional';
   if (bed.closed && bed.points.length >= 3) return design.reviewed ? 'Reviewed' : 'Ready for Review';
   if (bed.points.length > 0) return 'In Progress';
   return 'Not Started';
@@ -112,7 +121,8 @@ export function maxReachableStage(design) {
   if (!design.location) return 'location';
   if (!allBedsValid(design)) return 'sketch';
   if (!design.reviewed) return 'review';
-  if (!allPhotosDone(design)) return 'photos';
+  if (!design.photosDone) return 'photos';
+  if (!design.completed) return 'plants';
   return 'complete';
 }
 
@@ -144,8 +154,20 @@ export function reducer(design, action) {
     }
     case 'setReviewed':
       return { ...design, reviewed: action.value };
+    case 'setPhotosDone':
+      return { ...design, photosDone: action.value };
     case 'setCompleted':
       return { ...design, completed: action.value };
+    case 'setZone':
+      return { ...design, zone: action.zone };
+    case 'addPlant':
+      return { ...design, plants: [...(design.plants || []), action.plant], completed: false };
+    case 'movePlant':
+      return { ...design, plants: (design.plants || []).map((p) => (p.id === action.id ? { ...p, lat: action.lat, lng: action.lng, bedId: action.bedId ?? p.bedId } : p)) };
+    case 'removePlant':
+      return { ...design, plants: (design.plants || []).filter((p) => p.id !== action.id), completed: false };
+    case 'clearPlants':
+      return { ...design, plants: [], completed: false };
     default:
       return design;
   }

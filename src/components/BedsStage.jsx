@@ -1,7 +1,32 @@
+import { useState } from 'react';
 import { BED_COLORS } from '../lib/design.js';
+import { readDesignFile } from '../lib/designFile.js';
 
 export default function BedsStage({ design, dispatch }) {
   const n = design.bedCount;
+  const [openErr, setOpenErr] = useState(null);
+  // The file input is created on demand rather than rendered, so the page
+  // never contains a file input before the Photos stage.
+  const openSavedDesign = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = async () => {
+      const f = input.files?.[0];
+      input.remove();
+      if (!f) return;
+      try {
+        const d = await readDesignFile(f);
+        setOpenErr(null);
+        dispatch({ type: 'replace', design: d });
+      } catch (err) {
+        setOpenErr(err.message || 'The file could not be opened.');
+      }
+    };
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.click();
+  };
   const set = (v) => dispatch({ type: 'setBedCount', count: Number.isFinite(v) ? v : 1 });
   const hasBeds = design.beds.length > 0;
   return (
@@ -43,6 +68,16 @@ export default function BedsStage({ design, dispatch }) {
       <button type="button" className="btn btn-primary btn-block" onClick={() => dispatch({ type: 'confirmBeds' })}>
         {hasBeds ? 'Save and continue' : `Continue with ${n} bed${n === 1 ? '' : 's'}`}
       </button>
+      <div className="divider" />
+      <p className="hint">Have a design file saved from this app? Open it to continue where you left off. Photos are added again after Review.</p>
+      <button type="button" className="btn btn-block" onClick={openSavedDesign}>
+        Open a saved design file
+      </button>
+      {openErr && (
+        <div className="notice notice-warn" role="alert">
+          {openErr}
+        </div>
+      )}
     </div>
   );
 }

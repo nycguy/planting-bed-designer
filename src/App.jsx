@@ -6,13 +6,14 @@ import SketchStage from './components/SketchStage.jsx';
 import ReviewStage from './components/ReviewStage.jsx';
 import PhotosStage from './components/PhotosStage.jsx';
 import CompleteStage from './components/CompleteStage.jsx';
-import { newDesign, reducer, canEnterStage, maxReachableStage, STAGES } from './lib/design.js';
+import { newDesign, reducer, canEnterStage, maxReachableStage, STAGES, upgradeDesign } from './lib/design.js';
+import PlantsStage from './components/PlantsStage.jsx';
 import { loadDesign, saveDesign, clearDesign, clearAllPhotos, storageAvailable } from './lib/storage.js';
 import { consumeTransferFromUrl, transferUrl, safariSchemeUrl, detectEnvironment } from './lib/transfer.js';
 
 function initialState() {
-  const transferred = consumeTransferFromUrl();
-  const saved = loadDesign();
+  const transferred = upgradeDesign(consumeTransferFromUrl());
+  const saved = upgradeDesign(loadDesign());
   if (transferred) {
     // Keep photo metadata for beds that already exist on this device
     // (photo bytes live in this browser's IndexedDB).
@@ -152,6 +153,7 @@ export default function App() {
         {stage === 'sketch' && <SketchStage key={editEntry.nonce} design={design} dispatch={dispatch} initialBedId={editEntry.bedId} initialAction={editEntry.action} />}
         {stage === 'review' && <ReviewStage design={design} dispatch={dispatch} onEditBed={onEditBed} />}
         {stage === 'photos' && <PhotosStage design={design} dispatch={dispatch} onOpenInSafari={openInSafari} />}
+        {stage === 'plants' && <PlantsStage design={design} dispatch={dispatch} />}
         {stage === 'complete' && <CompleteStage design={design} dispatch={dispatch} onEditBed={onEditBed} onStartNew={() => setConfirmNew(true)} />}
       </main>
 

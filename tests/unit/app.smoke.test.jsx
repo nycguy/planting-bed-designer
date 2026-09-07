@@ -19,7 +19,7 @@ describe('App smoke test', () => {
     expect(el.querySelectorAll('input[type=file]').length).toBe(0);
     // Stage rail shows all six stages; only Beds is reachable at the start.
     const rail = [...el.querySelectorAll('.stagerail button')];
-    expect(rail.map((b) => b.textContent)).toEqual(['Beds', 'Location', 'Sketch', 'Review', 'Photos', 'Complete']);
+    expect(rail.map((b) => b.textContent)).toEqual(['Beds', 'Location', 'Sketch', 'Review', 'Photos', 'Plants', 'Complete']);
     expect(rail.slice(1).every((b) => b.disabled)).toBe(true);
   });
 });

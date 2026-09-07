@@ -2,7 +2,34 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { imageryById } from '../lib/mapServices.js';
-import { distanceMeters, metersToFeet, midpoint, sideLengths } from '../lib/geometry.js';
+
+// Leaflet tile layer for an ArcGIS Server map service that has no tile
+// cache (for example NYS orthoimagery). Each tile is fetched through the
+// service's export operation using the tile's Web Mercator bounding box,
+// so it lines up exactly with ordinary XYZ tiles.
+const ArcGISExportLayer = L.TileLayer.extend({
+  getTileUrl(coords) {
+    const size = this.getTileSize();
+    const nw = this._map.unproject(coords.scaleBy(size), coords.z);
+    const se = this._map.unproject(coords.add([1, 1]).scaleBy(size), coords.z);
+    const a = L.CRS.EPSG3857.project(nw);
+    const b = L.CRS.EPSG3857.project(se);
+    const bbox = [a.x, b.y, b.x, a.y].join(',');
+    const q = new URLSearchParams({
+      f: 'image',
+      format: 'jpg',
+      transparent: 'false',
+      bboxSR: '3857',
+      imageSR: '3857',
+      size: `${size.x},${size.y}`,
+      dpi: '96',
+      bbox,
+    });
+    return `${this._url}/export?${q}`;
+  },
+});
+import { distanceMeters, metersToFeet, midpoint, sideLengths, summarize, fmtSqFt, offsetMeters } from '../lib/geometry.js';
+import { plantById, categoryById } from '../data/plants.js';
 
 const isTouch = () => typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
@@ -12,6 +39,41 @@ function lenLabel(text, color, cls = '') {
     html: `<div class="lenlabel ${cls}" style="--c:${color}">${text}</div>`,
     iconSize: [0, 0],
   });
+}
+
+function escapeHtml(t) {
+  return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+// Deterministic pseudo-random in [0, 1) from a string and index, so a
+// flower drift keeps the same outline every time it is drawn.
+function hash01(str, i) {
+  let h = 2166136261 ^ i;
+  for (let k = 0; k < str.length; k++) {
+    h ^= str.charCodeAt(k);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+// An irregular, kidney-ish outline about 18 in. across for a flower or
+// bulb grouping. Ten points around the center with a jittered radius.
+export function driftShape(center, seed, diameterFt = 1.5) {
+  const r = (diameterFt * 0.3048) / 2;
+  const n = 10;
+  const pts = [];
+  const stretch = 1 + 0.35 * hash01(seed, 99); // slightly elongated
+  const rot = hash01(seed, 98) * Math.PI;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const jitter = 0.72 + 0.56 * hash01(seed, i);
+    const x = Math.cos(a) * r * jitter * stretch;
+    const y = Math.sin(a) * r * jitter;
+    const e = x * Math.cos(rot) - y * Math.sin(rot);
+    const nn = x * Math.sin(rot) + y * Math.cos(rot);
+    pts.push(offsetMeters(center, e, nn));
+  }
+  return pts;
 }
 
 const MapView = forwardRef(function MapView(
@@ -34,6 +96,11 @@ const MapView = forwardRef(function MapView(
     onSelectBed,
     onImageryError,
     onPreviewLength,
+    plants = [],
+    selectedPlantId = null,
+    onPlacePlant,
+    onSelectPlant,
+    onMovePlant,
   },
   ref,
 ) {
@@ -45,7 +112,8 @@ const MapView = forwardRef(function MapView(
   const previewLabel = useRef(null);
   const propMarker = useRef(null);
   const cb = useRef({});
-  cb.current = { onViewChange, onAddPoint, onMoveVertex, onSelectVertex, onInsertPoint, onSelectBed, onImageryError, onPreviewLength };
+  cb.current = { onViewChange, onAddPoint, onMoveVertex, onSelectVertex, onInsertPoint, onSelectBed, onImageryError, onPreviewLength, onPlacePlant, onSelectPlant, onMovePlant };
+  const plantLayers = useRef(null);
   const stateRef = useRef({});
   stateRef.current = { beds, activeBedId, mode };
   // Layers of the active bed, updated imperatively while a vertex is dragged.
@@ -69,9 +137,12 @@ const MapView = forwardRef(function MapView(
   useImperativeHandle(ref, () => ({
     flyTo: (latlng, z) => map.current?.setView(latlng, z ?? map.current.getZoom(), { animate: true }),
     fitPoints: (pts) => {
-      if (!map.current || !pts?.length) return;
-      if (pts.length === 1) return map.current.setView(pts[0], Math.max(map.current.getZoom(), 19));
-      map.current.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 21 });
+      const m = map.current;
+      if (!m || !pts?.length) return;
+      // The container may have just been laid out; measure before fitting.
+      m.invalidateSize({ animate: false });
+      if (pts.length === 1) return m.setView(pts[0], Math.max(m.getZoom(), 19), { animate: false });
+      m.fitBounds(L.latLngBounds(pts), { padding: [36, 36], maxZoom: 21, animate: false });
     },
     getCenter: () => {
       const c = map.current?.getCenter();
@@ -97,6 +168,7 @@ const MapView = forwardRef(function MapView(
     });
     map.current = m;
     layers.current = L.layerGroup().addTo(m);
+    plantLayers.current = L.layerGroup().addTo(m);
     preview.current = L.polyline([], { color: '#fff', weight: 2, dashArray: '6 6', interactive: false });
     previewLabel.current = L.marker([0, 0], { icon: lenLabel('', '#fff', 'preview'), interactive: false, keyboard: false });
 
@@ -108,6 +180,10 @@ const MapView = forwardRef(function MapView(
       const { mode } = stateRef.current;
       if (mode === 'draw') cb.current.onAddPoint?.([e.latlng.lat, e.latlng.lng]);
       else if (mode === 'edit') cb.current.onSelectVertex?.(null);
+      else if (mode === 'plant') {
+        if (cb.current.onPlacePlant) cb.current.onPlacePlant([e.latlng.lat, e.latlng.lng]);
+        else cb.current.onSelectPlant?.(null);
+      }
     });
     const updatePreview = (latlng) => {
       const { beds, activeBedId, mode } = stateRef.current;
@@ -147,12 +223,14 @@ const MapView = forwardRef(function MapView(
     const src = imageryById(imageryId);
     if (tiles.current) tiles.current.remove();
     let errors = 0;
-    const t = L.tileLayer(src.url, {
+    const opts = {
       maxNativeZoom: src.maxNativeZoom,
       maxZoom: 22,
       attribution: src.attribution,
-      crossOrigin: true,
-    });
+      crossOrigin: src.crossOrigin !== false,
+      bounds: src.bounds ? L.latLngBounds(src.bounds) : undefined,
+    };
+    const t = src.type === 'arcgis-export' ? new ArcGISExportLayer(src.url, opts) : L.tileLayer(src.url, opts);
     t.on('tileerror', () => {
       errors += 1;
       if (errors === 6) cb.current.onImageryError?.(src);
@@ -199,7 +277,7 @@ const MapView = forwardRef(function MapView(
     if (!m || !g) return;
     g.clearLayers();
     live.current = { poly: null, labels: [], mids: [], pts: [] };
-    el.current?.classList.toggle('drawing', mode === 'draw');
+    el.current?.classList.toggle('drawing', mode === 'draw' || (mode === 'plant' && !!cb.current.onPlacePlant));
     if (mode !== 'draw') {
       preview.current.remove();
       previewLabel.current.remove();
@@ -217,7 +295,7 @@ const MapView = forwardRef(function MapView(
           weight: active ? 4 : 3,
           opacity,
           fillColor: bed.color,
-          fillOpacity: active ? 0.28 : 0.15,
+          fillOpacity: mode === 'view' ? 0.3 : active ? 0.28 : 0.15,
           dashArray: bed.closed ? null : '8 8',
           interactive: mode !== 'draw' && !!cb.current.onSelectBed,
         });
@@ -232,6 +310,24 @@ const MapView = forwardRef(function MapView(
         if (active) live.current.poly = line;
       }
       if (active) live.current.pts = pts.slice();
+
+      // In view mode (Review, report) show one label per bed instead of
+      // per-side lengths, which would clutter a map of the whole yard.
+      if (mode === 'view') {
+        if (pts.length >= 3 && bed.closed) {
+          const c = L.polygon(pts).getBounds().getCenter();
+          L.marker(c, {
+            icon: L.divIcon({
+              className: '',
+              html: `<div class="bedlabel" style="--c:${bed.color}">Bed ${bed.number}<small>${fmtSqFt(summarize(pts).areaSqFt)}</small></div>`,
+              iconSize: [0, 0],
+            }),
+            interactive: false,
+            keyboard: false,
+          }).addTo(g);
+        }
+        continue;
+      }
 
       // Side-length labels.
       const lens = sideLengths(pts);
@@ -307,6 +403,80 @@ const MapView = forwardRef(function MapView(
       }
     }
   }, [beds, activeBedId, mode, selectedVertex, hotSide]);
+
+  // Plants: circles sized to mature spread for trees and shrubs, small
+  // irregular drifts for flowers and bulbs.
+  useEffect(() => {
+    const m = map.current;
+    const g = plantLayers.current;
+    if (!m || !g) return;
+    g.clearLayers();
+    const editable = mode === 'plant';
+    for (const pl of plants) {
+      const info = plantById(pl.plantId);
+      if (!info) continue;
+      const cat = categoryById(info.category);
+      const selected = pl.id === selectedPlantId;
+      const center = [pl.lat, pl.lng];
+      const style = {
+        color: selected ? '#fff' : cat.color,
+        weight: selected ? 3 : 2,
+        opacity: 0.95,
+        fillColor: cat.color,
+        fillOpacity: selected ? 0.5 : 0.32,
+        interactive: editable,
+        bubblingMouseEvents: false,
+      };
+      let shape;
+      if (info.category === 'flower') {
+        shape = L.polygon(driftShape(center, pl.id), style);
+      } else {
+        shape = L.circle(center, { ...style, radius: (info.spreadFt * 0.3048) / 2 });
+      }
+      shape.on('click', (e) => {
+        L.DomEvent.stop(e);
+        cb.current.onSelectPlant?.(pl.id);
+      });
+      shape.addTo(g);
+
+      // Label: short name, only when zoomed in enough to read.
+      if (m.getZoom() >= 19 || selected) {
+        L.marker(center, {
+          icon: L.divIcon({ className: '', html: `<div class="plantlabel" style="--c:${cat.color}">${escapeHtml(info.name)}</div>`, iconSize: [0, 0] }),
+          interactive: false,
+          keyboard: false,
+        }).addTo(g);
+      }
+
+      // Drag handle for the selected plant.
+      if (editable && selected) {
+        const mk = L.marker(center, {
+          draggable: true,
+          keyboard: false,
+          zIndexOffset: 1200,
+          icon: L.divIcon({ className: '', html: `<div class="vtx sel" style="--c:${cat.color}" role="button" aria-label="Move ${escapeHtml(info.name)}"></div>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
+        });
+        mk.on('drag', (e) => {
+          const ll = e.target.getLatLng();
+          if (shape.setLatLng) shape.setLatLng(ll);
+          else shape.setLatLngs(driftShape([ll.lat, ll.lng], pl.id));
+        });
+        mk.on('dragend', (e) => {
+          const ll = e.target.getLatLng();
+          cb.current.onMovePlant?.(pl.id, [ll.lat, ll.lng]);
+        });
+        mk.addTo(g);
+      }
+    }
+    const relabel = () => {
+      // Re-run to show/hide labels as zoom crosses the threshold.
+      g.eachLayer((l) => {
+        if (l instanceof L.Marker && l.options.icon?.options?.html?.includes('plantlabel')) l.setOpacity(m.getZoom() >= 19 ? 1 : 0);
+      });
+    };
+    m.on('zoomend', relabel);
+    return () => m.off('zoomend', relabel);
+  }, [plants, selectedPlantId, mode]);
 
   // Re-measure after layout changes (bottom sheet expand/collapse).
   useEffect(() => {

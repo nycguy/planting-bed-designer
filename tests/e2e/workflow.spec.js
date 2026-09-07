@@ -25,7 +25,9 @@ async function mockServices(page) {
       },
     }),
   );
-  await page.route(/arcgisonline\.com|nationalmap\.gov|maptiler\.com/, (route) => route.fulfill({ body: tilePng, contentType: 'image/png' }));
+  await page.route(/phzmapi\.org/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ zone: '6b', temperature_range: '-5 to 0', coordinates: { lat: 41.2, lon: -73.7 } }) }));
+  await page.route(/nominatim\.openstreetmap\.org\/reverse/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ address: { postcode: '10549' } }) }));
+  await page.route(/orthos\.its\.ny\.gov|arcgisonline\.com|nationalmap\.gov|maptiler\.com/, (route) => route.fulfill({ body: tilePng, contentType: 'image/png' }));
 }
 
 async function startDesign(page, beds) {
@@ -165,9 +167,24 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await page.getByTestId('replace-2').setInputFiles([]);
     await expect(page.locator('.notice-err')).toHaveCount(0);
 
+    // Planting design: pick a shrub for the zone and place two of them in Bed 1.
+    await page.getByTestId('photos-continue').click();
+    await expect(page.getByTestId('plants-stage')).toBeVisible();
+    await page.getByRole('tab', { name: 'Shrubs' }).click();
+    await page.getByTestId('plant-search').fill('hydrangea');
+    await page.getByTestId('plant-hydrangea-paniculata').click();
+    await expect(page.locator('.map-banner')).toContainText('Tap the map to place Panicle Hydrangea');
+    const mapBox = await page.locator('.leaflet-container').boundingBox();
+    await page.mouse.click(mapBox.x + mapBox.width * 0.5, mapBox.y + mapBox.height * 0.45);
+    await page.mouse.click(mapBox.x + mapBox.width * 0.55, mapBox.y + mapBox.height * 0.45);
+    await expect(page.locator('.map-banner')).toContainText('(2 placed)');
+    await page.getByRole('button', { name: 'Done' }).click();
+    await expect(page.locator('.sheet-handle')).toContainText('2 placed');
+
     // Complete.
-    await page.getByRole('button', { name: 'Complete design' }).click();
+    await page.getByTestId('finish-design').click();
     await expect(page.getByRole('heading', { name: 'Design complete' })).toBeVisible();
+    await expect(page.locator('.schedule')).toContainText('Panicle Hydrangea');
     await expect(page.getByTestId('complete-photo-1')).toBeVisible();
     await expect(page.getByTestId('complete-photo-2')).toBeVisible();
     await expect(page.getByTestId('complete-bed-1')).toContainText('25.0 ft');
@@ -179,7 +196,8 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await page.getByRole('button', { name: /^Review/ }).click();
     await page.getByRole('button', { name: 'Beds are finished' }).click();
     await expect(page.getByText('2 of 2 bed photos added')).toBeVisible();
-    await page.getByRole('button', { name: 'Complete design' }).click();
+    await page.getByTestId('photos-continue').click();
+    await page.getByTestId('finish-design').click();
     await expect(page.getByTestId('complete-photo-1')).toBeVisible();
 
     // Export produces a download.

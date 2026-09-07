@@ -41,3 +41,19 @@ Device: ____________  iOS: ______  Date: __________  Tester: __________  Product
 ## Recording results
 
 Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column, and attach screenshots of steps 9, 10, 21, and 22. Any failure in steps 9–13 or 21–22 means the photo requirement is **not** met.
+
+
+## Part C — Hardiness zone and planting design (Safari)
+
+25. After choosing an address at Location, a green badge "USDA Zone Nx" appears under the address within a few seconds. Record the zone shown and confirm it against <https://planthardiness.ars.usda.gov/> for the same ZIP.
+26. Tap **Change** on the badge and pick a different zone; the badge updates and says "Chosen manually." Change it back.
+27. On the Photos stage, with no photos added, the button reads "Skip photos and design the beds" and is enabled. Tap it. The Plants stage opens with the map fitted to all beds.
+28. The Trees tab is selected. The count in the sheet handle ("N for your zone") is smaller than the full list, and no plant with a zone range outside yours appears (search "crape" in zone 6 or colder: no result).
+29. Search "maple", tap **Red Maple**. The sheet collapses and the banner reads "Tap the map to place Red Maple." Tap inside Bed 1. A green circle about 40 ft across appears with a label. Tap again nearby: a second circle, banner shows "(2 placed)".
+30. Tap **Shrubs**, search "hydrangea", place two Panicle Hydrangea inside the tree circle. Overlap is allowed; nothing is blocked.
+31. Tap **Flowers & bulbs**, place three Hosta. Each is an irregular blob roughly 18 in. across, not a circle, and each has a different outline.
+32. Tap **Done**. Tap one hydrangea circle: it highlights, a handle appears, and About / Remove buttons show at the bottom. Drag the handle a few feet; the circle follows. Tap **Remove**; it disappears and the count drops.
+33. The sheet's "Placed so far" section lists plants by bed with correct quantities.
+34. Tap **Finish design and see the report**. The report shows the zone badge, the plants on the map, and a plant list table with quantities and mature sizes.
+35. Print preview: plant circles render on the map and the plant list table is on the page.
+36. Tap **Edit planting**; the Plants stage reopens with everything still placed. Refresh the page; plants survive.
