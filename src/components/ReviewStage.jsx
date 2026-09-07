@@ -5,7 +5,8 @@ import { bedValid, designTotals } from '../lib/design.js';
 import { SUN_OPTIONS } from '../data/plants.js';
 import { summarize, fmtFt, fmtSqFt } from '../lib/geometry.js';
 
-export default function ReviewStage({ design, dispatch, onEditBed }) {
+export default function ReviewStage({ design, dispatch, onEditBed, onAddBed }) {
+  const [removing, setRemoving] = useState(null);
   const loc = design.location;
   const totals = designTotals(design);
   const [rename, setRename] = useState(null); // { id, name }
@@ -104,6 +105,11 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
               <button type="button" className="btn btn-sm" onClick={() => onEditBed(b.id, 'redraw')}>
                 Redraw bed
               </button>
+              {design.beds.length > 1 && (
+                <button type="button" className="btn btn-sm btn-ghost" onClick={() => setRemoving(b)}>
+                  Remove bed
+                </button>
+              )}
             </div>
             <div className="sunpick" role="group" aria-label={`Light in ${b.name}`}>
               <span className="sunlabel">Light:</span>
@@ -126,6 +132,12 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
         );
       })}
 
+      {design.beds.length < 12 && (
+        <button type="button" className="btn btn-block" onClick={onAddBed} data-testid="add-bed">
+          + Add another bed
+        </button>
+      )}
+
       <button
         type="button"
         className="btn btn-primary btn-block"
@@ -141,6 +153,26 @@ export default function ReviewStage({ design, dispatch, onEditBed }) {
         Tell the app how much sun each bed gets so the plant list can be matched to it. Photos come next and are optional.
       </p>
 
+      {removing && (
+        <Modal title={`Remove ${removing.name}?`} onClose={() => setRemoving(null)}>
+          <p>This deletes the outline{removing.photo ? ' and photo' : ''} for {removing.name}. Plants placed in it stay on the map but are no longer counted in a bed. Later beds are renumbered.</p>
+          <div className="btn-row">
+            <button type="button" className="btn" onClick={() => setRemoving(null)}>
+              Keep bed
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                dispatch({ type: 'removeBed', id: removing.id });
+                setRemoving(null);
+              }}
+            >
+              Remove bed
+            </button>
+          </div>
+        </Modal>
+      )}
       {rename && (
         <Modal title="Rename bed" onClose={() => setRename(null)}>
           <div className="field">

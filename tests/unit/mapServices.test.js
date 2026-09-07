@@ -10,6 +10,11 @@ describe('imagery sources', () => {
     // Mount Kisco, NY
     expect(bestImageryFor(41.204, -73.727)).toBe('nys');
   });
+  it('uses Maine imagery for a Maine address', () => {
+    // Portland, ME
+    expect(bestImageryFor(43.66, -70.26)).toBe('maine');
+    expect(imageryById('maine').type).toBe('arcgis-image');
+  });
   it('falls back to a worldwide source outside New York', () => {
     // Richmond, VA
     const id = bestImageryFor(37.54, -77.43);

@@ -49,9 +49,9 @@ Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column,
 26. Tap **Change** on the badge and pick a different zone; the badge updates and says "Chosen manually." Change it back.
 27. On the Photos stage, with no photos added, the button reads "Skip photos and design the beds" and is enabled. Tap it. The Plants stage opens with the map fitted to all beds.
 28. The Trees tab is selected. The count in the sheet handle ("N for your zone") is smaller than the full list, and no plant with a zone range outside yours appears (search "crape" in zone 6 or colder: no result).
-29. Search "maple", tap **Red Maple**. The sheet collapses and the banner reads "Tap the map to place Red Maple." Tap inside Bed 1. A green circle about 40 ft across appears with a label. Tap again nearby: a second circle, banner shows "(2 placed)".
+29. Uncheck **Deer resistant** for this step. Search "maple", tap **Red Maple**. The sheet collapses and the banner reads "Tap the map to place Red Maple." Tap inside Bed 1. A green circle about 40 ft across appears with a label. Tap again nearby: a second circle, banner shows "(2 placed)".
 30. Tap **Shrubs**, search "hydrangea", place two Panicle Hydrangea inside the tree circle. Overlap is allowed; nothing is blocked.
-31. Tap **Flowers & bulbs**, place three Hosta. Each is an irregular blob roughly 18 in. across, not a circle, and each has a different outline.
+31. Tap **Flowers**, place three Hosta. Each is an irregular blob roughly 18 in. across, not a circle, and each has a different outline.
 32. Tap **Done**. Tap one hydrangea circle: it highlights, a handle appears, and About / Remove buttons show at the bottom. Drag the handle a few feet; the circle follows. Tap **Remove**; it disappears and the count drops.
 33. The sheet's "Placed so far" section lists plants by bed with correct quantities.
 34. Tap **Finish design and see the report**. The report shows the zone badge, the plants on the map, and a plant list table with quantities and mature sizes.
@@ -62,7 +62,7 @@ Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column,
 
 37. At Review, tap **Full sun** on Bed 1 and **Shade** on Bed 2. The buttons fill in the bed's color. Refresh; the choices persist.
 38. At Plants, a "For bed:" row shows a chip per bed. Tap Bed 2's chip: the Light filter jumps to Shade and the list shrinks. Tap **Any** to clear.
-39. Check **Deer resistant**: Hosta disappears from Flowers & bulbs; Hellebore stays. Check **Native** as well: the list shrinks again and every row shows both tags.
+39. **Deer resistant** is checked by default and Hosta is absent from Flowers; uncheck it and Hosta appears. Re-check it, then check **Native** as well: the list shrinks again and every row shows both tags.
 40. Place a Hosta inside Bed 1 (full sun). A yellow "Light check" notice appears in the sheet naming Hosta and Bed 1.
 41. Plant rows show a small photo for most plants (needs a connection). Open ⓘ on one: a larger photo with a "Photo via Wikipedia" caption.
 42. Tap **Undo** (top left): the last placement disappears. **Redo** restores it. Undo is disabled when nothing is left to undo.
@@ -73,3 +73,6 @@ Copy this file to `docs/results/YYYY-MM-DD-<model>.md`, fill in the Pass column,
 47. Report: map has a scale bar (bottom left) and an N arrow (bottom right) and a legend line under it. Plant list has a Light column with a ⚠ on the mismatched Hosta. Coverage table, bloom calendar, and Materials table are present. Print preview shows all of them.
 48. Tap **Shopping list (CSV)**: a .csv downloads and opens in Numbers or Excel with quantity and suggested size columns.
 49. Tap **Save to my designs**, name it, Save. Start a new design; on the first screen a **My designs** list shows it. Tap it: the saved design opens at Review with every bed and plant. Tap ✕ on it, confirm; it is gone.
+
+50. A **Grasses** tab sits between Shrubs and Flowers with six ornamental grasses and sedges; they draw as straw-colored circles at mature spread.
+51. On a desktop browser, hovering a plant thumbnail shows a larger photo beside it; moving away hides it. Esc cancels placing or clears the selection; Delete/Backspace removes the selected plant; Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z undo and redo.

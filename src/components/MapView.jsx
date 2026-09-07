@@ -15,17 +15,18 @@ const ArcGISExportLayer = L.TileLayer.extend({
     const a = L.CRS.EPSG3857.project(nw);
     const b = L.CRS.EPSG3857.project(se);
     const bbox = [a.x, b.y, b.x, a.y].join(',');
+    const image = this.options.imageService;
     const q = new URLSearchParams({
       f: 'image',
       format: 'jpg',
-      transparent: 'false',
       bboxSR: '3857',
       imageSR: '3857',
       size: `${size.x},${size.y}`,
-      dpi: '96',
       bbox,
+      ...(image ? {} : { transparent: 'false', dpi: '96' }),
+      ...(this.options.params || {}),
     });
-    return `${this._url}/export?${q}`;
+    return `${this._url}/${image ? 'exportImage' : 'export'}?${q}`;
   },
 });
 import { distanceMeters, metersToFeet, midpoint, sideLengths, summarize, fmtSqFt, offsetMeters } from '../lib/geometry.js';
@@ -234,7 +235,10 @@ const MapView = forwardRef(function MapView(
       crossOrigin: src.crossOrigin !== false,
       bounds: src.bounds ? L.latLngBounds(src.bounds) : undefined,
     };
-    const t = src.type === 'arcgis-export' ? new ArcGISExportLayer(src.url, opts) : L.tileLayer(src.url, opts);
+    const t =
+      src.type === 'arcgis-export' || src.type === 'arcgis-image'
+        ? new ArcGISExportLayer(src.url, { ...opts, imageService: src.type === 'arcgis-image', params: src.params })
+        : L.tileLayer(src.url, opts);
     t.on('tileerror', () => {
       errors += 1;
       if (errors === 6) cb.current.onImageryError?.(src);

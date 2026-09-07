@@ -28,7 +28,7 @@ async function mockServices(page) {
   await page.route(/en\.wikipedia\.org/, (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{}' }));
   await page.route(/phzmapi\.org/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ zone: '6b', temperature_range: '-5 to 0', coordinates: { lat: 41.2, lon: -73.7 } }) }));
   await page.route(/nominatim\.openstreetmap\.org\/reverse/, (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ address: { postcode: '10549' } }) }));
-  await page.route(/orthos\.its\.ny\.gov|arcgisonline\.com|nationalmap\.gov|maptiler\.com/, (route) => route.fulfill({ body: tilePng, contentType: 'image/png' }));
+  await page.route(/gis\.maine\.gov|orthos\.its\.ny\.gov|arcgisonline\.com|nationalmap\.gov|maptiler\.com/, (route) => route.fulfill({ body: tilePng, contentType: 'image/png' }));
 }
 
 async function startDesign(page, beds) {
@@ -189,12 +189,13 @@ test.describe('Planting Bed Designer — primary workflow', () => {
     await page.getByTestId('redo').click();
     await expect(page.locator('.sheet-handle')).toContainText('2 placed');
     // Light filter and coverage readout are present.
-    await page.getByRole('tab', { name: 'Flowers & bulbs' }).click();
+    await page.getByRole('tab', { name: 'Flowers' }).click();
     await page.getByTestId('filter-sun-shade').click();
-    await expect(page.getByTestId('plant-hosta')).toBeVisible();
+    // Deer resistant is on by default, so hosta is hidden until it is unchecked.
+    await expect(page.getByTestId('plant-hosta')).toHaveCount(0);
     await expect(page.getByTestId('plant-echinacea')).toHaveCount(0);
     await page.getByTestId('filter-deer').click();
-    await expect(page.getByTestId('plant-hosta')).toHaveCount(0);
+    await expect(page.getByTestId('plant-hosta')).toBeVisible();
     await expect(page.locator('.plantsummary')).toContainText('% covered at maturity');
     // Maturity slider changes the banner.
     await page.getByTestId('growth-slider').fill('0');

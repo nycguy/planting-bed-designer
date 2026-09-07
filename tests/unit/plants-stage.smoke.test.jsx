@@ -37,7 +37,7 @@ describe('PlantsStage', () => {
       createRoot(el).render(React.createElement(PlantsStage, { design: design(), dispatch }));
     });
     expect(el.textContent).toContain('Zone 6b');
-    expect(el.querySelector('[data-testid="plant-acer-rubrum"]')).toBeTruthy(); // zone 3–9 tree
+    expect(el.querySelector('[data-testid="plant-ginkgo-biloba"]')).toBeTruthy(); // zone 3–9 tree
     expect(el.querySelector('[data-testid="plant-lagerstroemia"]')).toBeNull(); // zone 7–9, excluded
     expect(el.textContent).toContain('1 × Hosta');
     // Hosta in a full-sun bed trips the light check.
@@ -51,21 +51,23 @@ describe('PlantsStage', () => {
     await act(async () => {
       [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent.startsWith('Flowers')).click();
     });
-    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeTruthy();
+    // Deer resistant starts checked, so hosta is hidden; unchecking shows it.
+    expect(el.querySelector('[data-testid="filter-deer"]').checked).toBe(true);
+    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeNull();
+    expect(el.querySelector('[data-testid="plant-helleborus"]')).toBeTruthy();
     await act(async () => {
       el.querySelector('[data-testid="filter-deer"]').click();
     });
-    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeNull();
-    expect(el.querySelector('[data-testid="plant-helleborus"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="plant-hosta"]')).toBeTruthy();
     await act(async () => {
       el.querySelector('[data-testid="filter-deer"]').click();
       [...el.querySelectorAll('[role="tab"]')].find((t) => t.textContent.startsWith('Trees')).click();
     });
     // Choosing a plant enters placing mode.
     await act(async () => {
-      el.querySelector('[data-testid="plant-acer-rubrum"]').click();
+      el.querySelector('[data-testid="plant-ginkgo-biloba"]').click();
     });
-    expect(el.querySelector('.map-banner').textContent).toContain('Tap the map to place Red Maple');
+    expect(el.querySelector('.map-banner').textContent).toContain('Tap the map to place Ginkgo (male)');
     // Finishing marks the design complete.
     await act(async () => {
       el.querySelector('[data-testid="finish-design"]').click();

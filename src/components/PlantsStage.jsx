@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView from './MapView.jsx';
 import ZonePanel from './ZonePanel.jsx';
-import PlantPhoto from './PlantPhoto.jsx';
+import PlantPhoto, { PlantHover } from './PlantPhoto.jsx';
 import { Modal } from './Shared.jsx';
 import { CATEGORIES, categoryById, plantById, searchPlants, SUN_LABELS, SUN_OPTIONS, sunCompatible, footprintSqFt, MONTHS } from '../data/plants.js';
 import { cryptoId, bedCoverage } from '../lib/design.js';
@@ -15,6 +15,7 @@ import { pointInPolygon, fmtSqFt } from '../lib/geometry.js';
 // drifts; existing features in gray.
 
 const GROWTH_STOPS = [1, 3, 5, 10, null]; // null = mature
+const isWide = () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 900px)').matches;
 
 export default function PlantsStage({ design, dispatch }) {
   const loc = design.location;
@@ -25,7 +26,7 @@ export default function PlantsStage({ design, dispatch }) {
   const [query, setQuery] = useState('');
   const [sun, setSun] = useState(null); // light filter
   const [nativeOnly, setNativeOnly] = useState(false);
-  const [deerOnly, setDeerOnly] = useState(false);
+  const [deerOnly, setDeerOnly] = useState(true); // on by default; deer pressure is the norm in the target area
   const [placing, setPlacing] = useState(null); // plant id being placed
   const [placeWidth, setPlaceWidth] = useState(null); // ft, for existing features
   const [selected, setSelected] = useState(null); // placed plant instance id
@@ -58,6 +59,33 @@ export default function PlantsStage({ design, dispatch }) {
     dispatch({ type: 'setPlants', plants: future.current.pop() });
     bump((n) => n + 1);
   };
+
+  // Desktop keyboard: Esc cancels placing / clears selection; Delete removes
+  // the selected plant; Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z or Ctrl+Y redo.
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'Escape') {
+        setPlacing(null);
+        setSelected(null);
+        setDetail(null);
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+        e.preventDefault();
+        withHistory({ type: 'removePlant', id: selected });
+        setSelected(null);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   const results = useMemo(() => searchPlants({ category, zone, query, sun, nativeOnly, deerOnly }), [category, zone, query, sun, nativeOnly, deerOnly]);
   const placingInfo = placing ? plantById(placing) : null;
@@ -322,7 +350,7 @@ export default function PlantsStage({ design, dispatch }) {
               const n = counts.get(p.id) || 0;
               const on = placing === p.id;
               return (
-                <li key={p.id} className={on ? 'on' : ''}>
+                <PlantHover key={p.id} plant={p} as="li" className={on ? 'on' : ''}>
                   <button
                     type="button"
                     className="plantrow"
@@ -332,10 +360,10 @@ export default function PlantsStage({ design, dispatch }) {
                       setSelected(null);
                       setPlacing(on ? null : p.id);
                       setPlaceWidth(null);
-                      if (!on) setCollapsed(true);
+                      if (!on && !isWide()) setCollapsed(true);
                     }}
                   >
-                    {p.category !== 'existing' && <PlantPhoto plant={p} size={44} />}
+                    {p.category !== 'existing' && <PlantPhoto plant={p} size={44} hover={false} />}
                     <span className="plantname">
                       {p.name}
                       <small>{p.botanical}</small>
@@ -359,7 +387,7 @@ export default function PlantsStage({ design, dispatch }) {
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDetail(p)} aria-label={`About ${p.name}`}>
                     ⓘ
                   </button>
-                </li>
+                </PlantHover>
               );
             })}
           </ul>
@@ -477,7 +505,7 @@ export default function PlantsStage({ design, dispatch }) {
                 setPlacing(detail.id);
                 setPlaceWidth(null);
                 setDetail(null);
-                setCollapsed(true);
+                if (!isWide()) setCollapsed(true);
               }}
             >
               Place this
@@ -558,14 +586,14 @@ export function BloomCalendar({ plants }) {
         ))}
       </div>
       {rows.map((r) => (
-        <div key={r.id} className="bloomrow">
+        <PlantHover key={r.id} plant={r} as="div" className="bloomrow hoverable">
           <span className="bloomname">{r.name}</span>
           {MONTHS.map((_, i) => {
             const m = i + 1;
             const on = m >= r.bloom[0] && m <= r.bloom[1];
             return <span key={m} className={`bloomcell ${on ? 'on' : ''}`} style={on ? { background: r.bloomColor } : undefined} />;
           })}
-        </div>
+        </PlantHover>
       ))}
       {gaps.length > 0 && (
         <p className="hint" style={{ marginTop: 6 }}>

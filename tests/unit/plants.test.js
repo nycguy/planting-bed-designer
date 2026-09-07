@@ -18,7 +18,7 @@ describe('plant list', () => {
       expect(p.heightFt).toBeGreaterThan(0);
       expect(p.botanical.length).toBeGreaterThan(3);
     }
-    for (const c of CATEGORIES.filter((c) => c.id !== 'existing')) expect(PLANTS.filter((p) => p.category === c.id).length).toBeGreaterThan(30);
+    for (const c of CATEGORIES.filter((c) => c.id !== 'existing')) expect(PLANTS.filter((p) => p.category === c.id).length).toBeGreaterThan(c.id === 'grass' ? 4 : 30);
   });
   it('parses zone strings', () => {
     expect(zoneNumber('7a')).toBe(7);

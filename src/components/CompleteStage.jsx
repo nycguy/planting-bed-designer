@@ -8,6 +8,7 @@ import { imageryById } from '../lib/mapServices.js';
 import { saveDesignFile } from '../lib/designFile.js';
 import { plantById, categoryById, CATEGORIES, sunCompatible, SUN_OPTIONS, SUN_LABELS, footprintSqFt } from '../data/plants.js';
 import { BloomCalendar } from './PlantsStage.jsx';
+import { PlantHover } from './PlantPhoto.jsx';
 import { bedCoverage } from '../lib/design.js';
 import { saveToLibrary } from '../lib/library.js';
 import { zoneLabel } from '../lib/zones.js';
@@ -65,7 +66,7 @@ function exportData(design) {
   }, 500);
 }
 
-export default function CompleteStage({ design, dispatch, onEditBed, onStartNew }) {
+export default function CompleteStage({ design, dispatch, onEditBed, onAddBed, onStartNew }) {
   const loc = design.location;
   const totals = designTotals(design);
   const urls = usePhotoUrls(design.beds);
@@ -208,6 +209,11 @@ export default function CompleteStage({ design, dispatch, onEditBed, onStartNew 
       })}
 
       <div className="btn-row no-print">
+        {design.beds.length < 12 && (
+          <button type="button" className="btn btn-block" onClick={onAddBed} data-testid="add-bed">
+            + Add another bed
+          </button>
+        )}
         <button type="button" className="btn btn-danger btn-block" onClick={onStartNew}>
           Start new design
         </button>
@@ -309,10 +315,12 @@ function PlantSchedule({ design, dispatch }) {
                   )}
                 </td>
                 <td>
-                  <span className="chip" style={{ background: categoryById(r.info.category).color }} />
-                  <b>{r.info.name}</b>
-                  <br />
-                  <small style={{ fontStyle: 'italic', color: 'var(--ink-soft)' }}>{r.info.botanical}</small>
+                  <PlantHover plant={r.info} className="hoverable">
+                    <span className="chip" style={{ background: categoryById(r.info.category).color }} />
+                    <b>{r.info.name}</b>
+                    <br />
+                    <small style={{ fontStyle: 'italic', color: 'var(--ink-soft)' }}>{r.info.botanical}</small>
+                  </PlantHover>
                 </td>
                 <td className="num">{r.n}</td>
                 <td className="num">
@@ -451,7 +459,7 @@ function Legend({ design }) {
       {cats.map((c) => (
         <span key={c.id}>
           <span className={`chip round ${c.id === 'existing' ? 'dashed' : ''}`} style={{ background: c.color }} />
-          {c.id === 'flower' ? 'Flower / bulb drift' : c.id === 'existing' ? 'Existing (kept)' : `${c.label.replace(/s$/, '')} at mature spread`}
+          {c.id === 'flower' ? 'Flower / bulb drift' : c.id === 'existing' ? 'Existing (kept)' : `${c.label.replace(/s$/, '').replace('Grasse', 'Grass')} at mature spread`}
         </span>
       ))}
     </div>
@@ -462,6 +470,7 @@ function Legend({ design }) {
 function containerFor(info) {
   if (info.category === 'tree') return info.heightFt >= 40 ? '15 gal or B&B, 1.5–2 in. caliper' : '7–10 gal';
   if (info.category === 'shrub') return info.spreadFt >= 6 ? '5 gal' : '3 gal';
+  if (info.category === 'grass') return info.heightFt >= 4 ? '2–3 gal' : '1 gal';
   if (/\(bulb\)/i.test(info.name)) return 'Bulbs, bag of 10–25';
   return info.spreadFt >= 2 ? '1 gal' : '1 qt';
 }

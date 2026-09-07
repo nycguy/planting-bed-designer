@@ -103,3 +103,25 @@ describe('transfer', () => {
     expect(detectEnvironment(desktop, { maxTouchPoints: 0 }).embedded).toBe(false);
   });
 });
+
+describe('adding and removing beds', () => {
+  it('appends a bed, un-reviews, and renumbers on removal', () => {
+    let d = { ...newDesign(), bedCount: 2 };
+    d = reducer(d, { type: 'confirmBeds' });
+    d = reducer(d, { type: 'setReviewed', value: true });
+    d = reducer(d, { type: 'addBed', id: 'new' });
+    expect(d.beds).toHaveLength(3);
+    expect(d.beds[2]).toMatchObject({ id: 'new', number: 3, name: 'Bed 3' });
+    expect(d.reviewed).toBe(false);
+    expect(d.bedCount).toBe(3);
+    d = reducer(d, { type: 'addPlant', plant: { id: 'p', plantId: 'hosta', category: 'flower', lat: 0, lng: 0, bedId: d.beds[0].id } });
+    d = reducer(d, { type: 'removeBed', id: d.beds[0].id });
+    expect(d.beds.map((b) => b.number)).toEqual([1, 2]);
+    expect(d.beds[1].id).toBe('new');
+    expect(d.beds[1].name).toBe('Bed 2');
+    expect(d.plants[0].bedId).toBeNull();
+    // Cannot remove the last bed.
+    d = reducer(d, { type: 'removeBed', id: d.beds[0].id });
+    expect(reducer(d, { type: 'removeBed', id: d.beds[0].id }).beds).toHaveLength(1);
+  });
+});

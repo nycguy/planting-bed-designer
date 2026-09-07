@@ -281,7 +281,7 @@ input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; ov
 .seg.on { background: var(--sheet); color: var(--hedge); box-shadow: 0 1px 3px rgba(0,0,0,.15); border-bottom: 3px solid var(--c); }
 .count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; border-radius: 10px; background: var(--hedge); color: #fff; font-size: 11px; font-weight: 700; padding: 0 6px; }
 .plantlist { list-style: none; margin: 8px 0; padding: 0; max-height: 38dvh; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); }
-.plantlist li { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); }
+.plantlist li { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); position: relative; }
 .plantlist li:last-child { border-bottom: 0; }
 .plantlist li.on { background: #e6f2e8; }
 .plantrow { flex: 1; display: flex; align-items: center; gap: 10px; text-align: left; border: 0; background: none; padding: 8px 10px; min-height: 52px; font: inherit; color: inherit; }
@@ -368,3 +368,32 @@ input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; ov
 .leaflet-container.viewing .leaflet-interactive { cursor: pointer; }
 .leaflet-container.panning, .leaflet-container.panning .leaflet-grab { cursor: grab; }
 .leaflet-container.leaflet-drag-target, .leaflet-dragging .leaflet-container.panning { cursor: grabbing !important; }
+
+/* ---------- Desktop ---------- */
+.plantpreview { position: fixed; z-index: 2000; width: 320px; background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 6px; pointer-events: none; }
+.plantpreview img { width: 100%; height: 300px; object-fit: cover; border-radius: 6px; display: block; }
+.plantpreview small { display: block; margin-top: 4px; font-size: 12px; color: #333; }
+@media (min-width: 900px) {
+  .sheet, .sheet.collapsed { width: 440px; }
+  .sheet-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .plantlist { max-height: none; flex: 1 1 200px; min-height: 160px; overflow-y: auto; }
+  .plantrow:hover { background: #f1f6f2; }
+  .plantlist li.on .plantrow:hover { background: #dcebdf; }
+  .segmented .seg { font-size: 13px; }
+  .page { max-width: 1040px; }
+  .report-page .bedcard { break-inside: avoid; }
+  .mapbtn:hover { background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+  .mapbtn.on:hover { background: var(--hedge-deep); }
+  .btn:hover:not(:disabled) { filter: brightness(0.96); }
+}
+@media (min-width: 1280px) {
+  .sheet, .sheet.collapsed { width: 500px; }
+  .report-page .beds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+.plantpreview-empty { display: flex; align-items: center; justify-content: center; height: 120px; color: #777; font-size: 13px; background: var(--field); border-radius: 6px; }
+@media (hover: hover) {
+  .bloomrow.hoverable:hover { background: #f1f6f2; border-radius: 4px; cursor: default; }
+  .hoverable { cursor: default; }
+}
+@media print { .plantpreview { display: none !important; } }

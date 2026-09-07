@@ -127,6 +127,7 @@ export async function geocodeOnce(query, { signal } = {}) {
 //
 // Two kinds:
 //   type 'xyz'           — pre-rendered tiles addressed by {z}/{x}/{y}.
+//   type 'arcgis-image'  — an ArcGIS image service; tiles come from exportImage.
 //   type 'arcgis-export' — an ArcGIS Server map service with no tile cache.
 //                          The app requests each 256 px tile through the
 //                          service's export operation with a Web Mercator
@@ -150,6 +151,21 @@ export const IMAGERY = [
     // Service extent is New York State only; outside it the map is blank.
     bounds: [[40.45, -79.8], [45.05, -71.8]],
     attribution: 'Orthoimagery &copy; NYS ITS Geospatial Services (NYSDOP)',
+    crossOrigin: false,
+  },
+  {
+    id: 'maine',
+    type: 'arcgis-image',
+    name: 'Maine Orthoimagery (GeoLibrary)',
+    url: 'https://gis.maine.gov/arcgis/rest/services/imageryBaseMapsEarthCover/orthoRegional/ImageServer',
+    // Maine GeoLibrary's aggregated statewide orthoimagery: 3-inch (7.5 cm)
+    // leaf-off imagery flown on a rotating regional schedule (2012–2020+),
+    // 4-band; the first three bands are natural color.
+    params: { bandIds: '0,1,2' },
+    maxNativeZoom: 22,
+    maxZoom: 22,
+    bounds: [[42.9, -71.15], [47.5, -66.85]],
+    attribution: 'Orthoimagery &copy; Maine GeoLibrary',
     crossOrigin: false,
   },
   {
@@ -199,10 +215,11 @@ export function imageryCovers(src, lat, lng) {
   return lat >= s && lat <= n && lng >= w && lng <= e;
 }
 
-// Pick the best source for a location: the default if it covers the point,
-// otherwise the first worldwide source.
+// Pick the best source for a location: the first state service whose
+// extent covers the point (in list order), otherwise the first worldwide
+// source.
 export function bestImageryFor(lat, lng) {
-  const def = imageryById(DEFAULT_IMAGERY);
-  if (imageryCovers(def, lat, lng)) return def.id;
-  return IMAGERY.find((s) => !s.bounds)?.id || def.id;
+  const state = IMAGERY.find((s) => s.bounds && imageryCovers(s, lat, lng));
+  if (state) return state.id;
+  return IMAGERY.find((s) => !s.bounds)?.id || IMAGERY[0].id;
 }

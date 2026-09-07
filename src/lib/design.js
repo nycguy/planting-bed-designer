@@ -182,6 +182,18 @@ export function reducer(design, action) {
       return { ...design, plants: action.plants, completed: false };
     case 'updatePlant':
       return { ...design, plants: (design.plants || []).map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)) };
+    case 'addBed': {
+      if (design.beds.length >= 12) return design;
+      const n = design.beds.length + 1;
+      const bed = { id: action.id || cryptoId(), number: n, name: `Bed ${n}`, color: BED_COLORS[(n - 1) % BED_COLORS.length], points: [], closed: false, sun: null, photo: null };
+      return { ...design, beds: [...design.beds, bed], bedCount: n, reviewed: false, completed: false };
+    }
+    case 'removeBed': {
+      if (design.beds.length <= 1) return design;
+      const beds = design.beds.filter((b) => b.id !== action.id).map((b, i) => ({ ...b, number: i + 1, name: /^Bed \d+$/.test(b.name) ? `Bed ${i + 1}` : b.name, color: BED_COLORS[i % BED_COLORS.length] }));
+      const plants = (design.plants || []).map((p) => (p.bedId === action.id ? { ...p, bedId: null } : p));
+      return { ...design, beds, plants, bedCount: beds.length, completed: false };
+    }
     case 'setBedSun':
       return { ...design, beds: design.beds.map((b) => (b.id === action.id ? { ...b, sun: action.sun } : b)) };
     default:

@@ -7,8 +7,8 @@
 // the plant's footprint on the map. Flowers and bulbs are placed as roughly
 // 18-inch drifts regardless of the listed spread.
 //
-// Categories: 'tree' | 'shrub' | 'flower' (perennials, annual-style
-// bedding plants, and bulbs). Sun: 'full' | 'part' | 'shade' | 'full-part' | 'part-shade'.
+// Categories: 'tree' | 'shrub' | 'grass' (ornamental grasses and sedges) |
+// 'flower' (perennials, annual-style bedding plants, and bulbs). Sun: 'full' | 'part' | 'shade' | 'full-part' | 'part-shade'.
 //
 // The list favors plants common in Northeast and Mid-Atlantic residential
 // landscapes (zones 4–8) but includes enough range to be useful elsewhere.
@@ -111,7 +111,7 @@ export const PLANTS = [
   { id: 'viburnum-plicatum', category: 'shrub', native: false, deerResistant: true, bloom: [5, 5], bloomColor: '#ffffff', name: 'Doublefile Viburnum', botanical: 'Viburnum plicatum f. tomentosum', zoneMin: 5, zoneMax: 8, spreadFt: 10, heightFt: 8, sun: 'full-part', notes: 'Horizontal branching lined with white flowers in May.' },
   { id: 'weigela', category: 'shrub', native: false, deerResistant: true, bloom: [5, 6], bloomColor: '#ec407a', name: 'Weigela', botanical: 'Weigela florida (\u2018Wine & Roses\u2019, \u2018Spilled Wine\u2019)', zoneMin: 4, zoneMax: 8, spreadFt: 4, heightFt: 3, sun: 'full', notes: 'Purple foliage cultivars; pink trumpet flowers; hummingbirds.' },
 
-  // ---------------- FLOWERS, PERENNIALS, BULBS ----------------
+  // ---------------- FLOWERS, PERENNIALS, BULBS (grasses are category 'grass') ----------------
   { id: 'achillea', category: 'flower', native: true, deerResistant: true, bloom: [6, 8], bloomColor: '#fdd835', name: 'Yarrow', botanical: 'Achillea millefolium', zoneMin: 3, zoneMax: 9, spreadFt: 2, heightFt: 2, sun: 'full', notes: 'Drought tolerant; flat flower heads; many colors.' },
   { id: 'agastache', category: 'flower', native: true, deerResistant: true, bloom: [7, 9], bloomColor: '#7986cb', name: 'Anise Hyssop', botanical: 'Agastache foeniculum', zoneMin: 4, zoneMax: 9, spreadFt: 2, heightFt: 3, sun: 'full', notes: 'Native; licorice-scented; bees and goldfinches.' },
   { id: 'alchemilla', category: 'flower', native: false, deerResistant: true, bloom: [6, 7], bloomColor: '#c6e34a', name: 'Lady\u2019s Mantle', botanical: 'Alchemilla mollis', zoneMin: 3, zoneMax: 8, spreadFt: 2, heightFt: 1.5, sun: 'part', notes: 'Chartreuse sprays; scalloped leaves hold dew.' },
@@ -124,8 +124,8 @@ export const PLANTS = [
   { id: 'astilbe', category: 'flower', native: false, deerResistant: true, bloom: [6, 7], bloomColor: '#f48fb1', name: 'Astilbe', botanical: 'Astilbe × arendsii', zoneMin: 4, zoneMax: 8, spreadFt: 2, heightFt: 2, sun: 'part-shade', notes: 'Feathery plumes; needs consistently moist soil.' },
   { id: 'baptisia', category: 'flower', native: true, deerResistant: true, bloom: [5, 6], bloomColor: '#3949ab', name: 'False Indigo', botanical: 'Baptisia australis', zoneMin: 3, zoneMax: 9, spreadFt: 3, heightFt: 3, sun: 'full', notes: 'Native; blue pea flowers; shrub-like; do not move once established.' },
   { id: 'brunnera', category: 'flower', native: false, deerResistant: true, bloom: [4, 5], bloomColor: '#64b5f6', name: 'Siberian Bugloss', botanical: 'Brunnera macrophylla \u2018Jack Frost\u2019', zoneMin: 3, zoneMax: 8, spreadFt: 1.5, heightFt: 1, sun: 'part-shade', notes: 'Silver leaves; blue forget-me-not flowers.' },
-  { id: 'calamagrostis', category: 'flower', native: false, deerResistant: true, bloom: [6, 9], bloomColor: '#c9b78c', name: 'Feather Reed Grass', botanical: 'Calamagrostis × acutiflora \u2018Karl Foerster\u2019', zoneMin: 4, zoneMax: 9, spreadFt: 2, heightFt: 4, sun: 'full', notes: 'Upright grass; vertical accent; cut back in late winter.' },
-  { id: 'carex', category: 'flower', native: true, deerResistant: true, name: 'Pennsylvania Sedge', botanical: 'Carex pensylvanica', zoneMin: 3, zoneMax: 8, spreadFt: 1.5, heightFt: 0.7, sun: 'part-shade', notes: 'Native lawn alternative for dry shade.' },
+  { id: 'calamagrostis', category: 'grass', native: false, deerResistant: true, bloom: [6, 9], bloomColor: '#c9b78c', name: 'Feather Reed Grass', botanical: 'Calamagrostis × acutiflora \u2018Karl Foerster\u2019', zoneMin: 4, zoneMax: 9, spreadFt: 2, heightFt: 4, sun: 'full', notes: 'Upright grass; vertical accent; cut back in late winter.' },
+  { id: 'carex', category: 'grass', native: true, deerResistant: true, name: 'Pennsylvania Sedge', botanical: 'Carex pensylvanica', zoneMin: 3, zoneMax: 8, spreadFt: 1.5, heightFt: 0.7, sun: 'part-shade', notes: 'Native lawn alternative for dry shade.' },
   { id: 'chelone', category: 'flower', native: true, deerResistant: false, bloom: [8, 9], bloomColor: '#f06292', name: 'Turtlehead', botanical: 'Chelone lyonii', zoneMin: 3, zoneMax: 8, spreadFt: 2, heightFt: 3, sun: 'part', notes: 'Native; pink late-summer flowers; moist soil.' },
   { id: 'coreopsis', category: 'flower', native: true, deerResistant: true, bloom: [6, 9], bloomColor: '#ffeb3b', name: 'Threadleaf Coreopsis', botanical: 'Coreopsis verticillata \u2018Zagreb\u2019', zoneMin: 4, zoneMax: 9, spreadFt: 1.5, heightFt: 1.5, sun: 'full', notes: 'Yellow all summer; drought tolerant.' },
   { id: 'crocus', category: 'flower', native: false, deerResistant: true, bloom: [3, 3], bloomColor: '#ab47bc', name: 'Crocus (bulb)', botanical: 'Crocus vernus / tommasinianus', zoneMin: 3, zoneMax: 8, spreadFt: 0.5, heightFt: 0.4, sun: 'full-part', notes: 'Earliest color; C. tommasinianus resists squirrels.' },
@@ -133,7 +133,7 @@ export const PLANTS = [
   { id: 'echinacea', category: 'flower', native: true, deerResistant: true, bloom: [7, 9], bloomColor: '#d81b60', name: 'Purple Coneflower', botanical: 'Echinacea purpurea', zoneMin: 3, zoneMax: 9, spreadFt: 1.5, heightFt: 3, sun: 'full', notes: 'Native; leave seedheads for goldfinches.' },
   { id: 'eutrochium', category: 'flower', native: true, deerResistant: true, bloom: [8, 9], bloomColor: '#ce93d8', name: 'Joe-Pye Weed', botanical: 'Eutrochium dubium \u2018Little Joe\u2019', zoneMin: 4, zoneMax: 8, spreadFt: 3, heightFt: 4, sun: 'full-part', notes: 'Native; mauve late-summer flowers; butterflies.' },
   { id: 'geranium', category: 'flower', native: false, deerResistant: true, bloom: [6, 10], bloomColor: '#5c6bc0', name: 'Hardy Geranium', botanical: 'Geranium \u2018Rozanne\u2019', zoneMin: 5, zoneMax: 8, spreadFt: 2.5, heightFt: 1.5, sun: 'full-part', notes: 'Blue flowers June to frost; sprawling filler.' },
-  { id: 'hakonechloa', category: 'flower', native: false, deerResistant: true, name: 'Japanese Forest Grass', botanical: 'Hakonechloa macra \u2018Aureola\u2019', zoneMin: 5, zoneMax: 9, spreadFt: 2, heightFt: 1.5, sun: 'part-shade', notes: 'Cascading gold grass for shade; slow.' },
+  { id: 'hakonechloa', category: 'grass', native: false, deerResistant: true, name: 'Japanese Forest Grass', botanical: 'Hakonechloa macra \u2018Aureola\u2019', zoneMin: 5, zoneMax: 9, spreadFt: 2, heightFt: 1.5, sun: 'part-shade', notes: 'Cascading gold grass for shade; slow.' },
   { id: 'helleborus', category: 'flower', native: false, deerResistant: true, bloom: [2, 4], bloomColor: '#ad6a8a', name: 'Hellebore (Lenten Rose)', botanical: 'Helleborus × hybridus', zoneMin: 4, zoneMax: 9, spreadFt: 2, heightFt: 1.5, sun: 'part-shade', notes: 'Evergreen; flowers February–April; deer proof.' },
   { id: 'hemerocallis', category: 'flower', native: false, deerResistant: false, bloom: [6, 9], bloomColor: '#ffb300', name: 'Daylily', botanical: 'Hemerocallis (\u2018Stella de Oro\u2019, \u2018Happy Returns\u2019)', zoneMin: 3, zoneMax: 9, spreadFt: 2, heightFt: 1.5, sun: 'full-part', notes: 'Indestructible; reblooming dwarfs; deer eat buds.' },
   { id: 'heuchera', category: 'flower', native: false, deerResistant: false, bloom: [5, 7], bloomColor: '#f8bbd0', name: 'Coral Bells', botanical: 'Heuchera hybrids', zoneMin: 4, zoneMax: 9, spreadFt: 1.5, heightFt: 1, sun: 'part', notes: 'Colored foliage (purple, caramel, lime); replant if crowns heave.' },
@@ -150,8 +150,8 @@ export const PLANTS = [
   { id: 'narcissus', category: 'flower', native: false, deerResistant: true, bloom: [3, 4], bloomColor: '#ffeb3b', name: 'Daffodil (bulb)', botanical: 'Narcissus', zoneMin: 3, zoneMax: 8, spreadFt: 0.7, heightFt: 1.3, sun: 'full-part', notes: 'Deer and rodent proof; plant in drifts in fall.' },
   { id: 'nepeta', category: 'flower', native: false, deerResistant: true, bloom: [5, 9], bloomColor: '#9fa8da', name: 'Catmint', botanical: 'Nepeta × faassenii \u2018Walker\u2019s Low\u2019', zoneMin: 4, zoneMax: 8, spreadFt: 3, heightFt: 2, sun: 'full', notes: 'Lavender-blue haze all summer; deer resistant; drought tolerant.' },
   { id: 'paeonia', category: 'flower', native: false, deerResistant: true, bloom: [5, 6], bloomColor: '#f48fb1', name: 'Peony', botanical: 'Paeonia lactiflora', zoneMin: 3, zoneMax: 8, spreadFt: 3, heightFt: 3, sun: 'full', notes: 'Lives for decades; plant eyes no deeper than 2 in.' },
-  { id: 'panicum', category: 'flower', native: true, deerResistant: true, bloom: [8, 10], bloomColor: '#c9b78c', name: 'Switchgrass', botanical: 'Panicum virgatum \u2018Northwind\u2019 / \u2018Shenandoah\u2019', zoneMin: 4, zoneMax: 9, spreadFt: 2.5, heightFt: 5, sun: 'full', notes: 'Native grass; upright; airy seedheads.' },
-  { id: 'pennisetum', category: 'flower', native: false, deerResistant: true, bloom: [8, 10], bloomColor: '#d7ccc8', name: 'Dwarf Fountain Grass', botanical: 'Pennisetum alopecuroides \u2018Hameln\u2019', zoneMin: 5, zoneMax: 9, spreadFt: 2, heightFt: 2.5, sun: 'full', notes: 'Soft bottlebrush plumes; mounding.' },
+  { id: 'panicum', category: 'grass', native: true, deerResistant: true, bloom: [8, 10], bloomColor: '#c9b78c', name: 'Switchgrass', botanical: 'Panicum virgatum \u2018Northwind\u2019 / \u2018Shenandoah\u2019', zoneMin: 4, zoneMax: 9, spreadFt: 2.5, heightFt: 5, sun: 'full', notes: 'Native grass; upright; airy seedheads.' },
+  { id: 'pennisetum', category: 'grass', native: false, deerResistant: true, bloom: [8, 10], bloomColor: '#d7ccc8', name: 'Dwarf Fountain Grass', botanical: 'Pennisetum alopecuroides \u2018Hameln\u2019', zoneMin: 5, zoneMax: 9, spreadFt: 2, heightFt: 2.5, sun: 'full', notes: 'Soft bottlebrush plumes; mounding.' },
   { id: 'perovskia', category: 'flower', native: false, deerResistant: true, bloom: [7, 9], bloomColor: '#7986cb', name: 'Russian Sage', botanical: 'Salvia yangii (Perovskia)', zoneMin: 5, zoneMax: 9, spreadFt: 3, heightFt: 3, sun: 'full', notes: 'Silver stems, blue haze; needs drainage and full sun.' },
   { id: 'phlox-paniculata', category: 'flower', native: true, deerResistant: false, bloom: [7, 9], bloomColor: '#f06292', name: 'Garden Phlox', botanical: 'Phlox paniculata (\u2018David\u2019, \u2018Jeana\u2019)', zoneMin: 4, zoneMax: 8, spreadFt: 2, heightFt: 3, sun: 'full', notes: 'Fragrant summer flowers; choose mildew-resistant cultivars.' },
   { id: 'phlox-subulata', category: 'flower', native: true, deerResistant: false, bloom: [4, 5], bloomColor: '#f48fb1', name: 'Creeping Phlox', botanical: 'Phlox subulata', zoneMin: 3, zoneMax: 9, spreadFt: 2, heightFt: 0.5, sun: 'full', notes: 'Carpet of April flowers; edges and slopes.' },
@@ -160,7 +160,7 @@ export const PLANTS = [
   { id: 'pulmonaria', category: 'flower', native: false, deerResistant: true, bloom: [4, 4], bloomColor: '#5c6bc0', name: 'Lungwort', botanical: 'Pulmonaria \u2018Raspberry Splash\u2019', zoneMin: 3, zoneMax: 8, spreadFt: 1.5, heightFt: 1, sun: 'part-shade', notes: 'Spotted leaves; early pink-blue flowers.' },
   { id: 'rudbeckia', category: 'flower', native: true, deerResistant: true, bloom: [7, 9], bloomColor: '#ffb300', name: 'Black-eyed Susan', botanical: 'Rudbeckia fulgida \u2018Goldsturm\u2019', zoneMin: 3, zoneMax: 9, spreadFt: 2, heightFt: 2.5, sun: 'full', notes: 'Native; gold from July to frost; spreads.' },
   { id: 'salvia', category: 'flower', native: false, deerResistant: true, bloom: [6, 7], bloomColor: '#5e35b1', name: 'Meadow Sage', botanical: 'Salvia nemorosa \u2018May Night\u2019 / \u2018Caradonna\u2019', zoneMin: 4, zoneMax: 8, spreadFt: 1.5, heightFt: 2, sun: 'full', notes: 'Violet spikes; shear for rebloom; deer resistant.' },
-  { id: 'schizachyrium', category: 'flower', native: true, deerResistant: true, bloom: [8, 9], bloomColor: '#c9b78c', name: 'Little Bluestem', botanical: 'Schizachyrium scoparium \u2018Standing Ovation\u2019', zoneMin: 3, zoneMax: 9, spreadFt: 1.5, heightFt: 3, sun: 'full', notes: 'Native grass; blue-green turning copper; lean soil.' },
+  { id: 'schizachyrium', category: 'grass', native: true, deerResistant: true, bloom: [8, 9], bloomColor: '#c9b78c', name: 'Little Bluestem', botanical: 'Schizachyrium scoparium \u2018Standing Ovation\u2019', zoneMin: 3, zoneMax: 9, spreadFt: 1.5, heightFt: 3, sun: 'full', notes: 'Native grass; blue-green turning copper; lean soil.' },
   { id: 'sedum', category: 'flower', native: false, deerResistant: true, bloom: [8, 10], bloomColor: '#e57373', name: 'Upright Sedum', botanical: 'Hylotelephium \u2018Autumn Joy\u2019', zoneMin: 3, zoneMax: 9, spreadFt: 2, heightFt: 2, sun: 'full', notes: 'Succulent; pink-to-rust fall heads; drought tolerant.' },
   { id: 'solidago', category: 'flower', native: true, deerResistant: true, bloom: [8, 9], bloomColor: '#fdd835', name: 'Dwarf Goldenrod', botanical: 'Solidago \u2018Fireworks\u2019 / \u2018Little Lemon\u2019', zoneMin: 4, zoneMax: 8, spreadFt: 2, heightFt: 2.5, sun: 'full', notes: 'Native; late-season gold; does not cause hay fever.' },
   { id: 'tiarella', category: 'flower', native: true, deerResistant: true, bloom: [4, 5], bloomColor: '#ffffff', name: 'Foamflower', botanical: 'Tiarella cordifolia', zoneMin: 3, zoneMax: 8, spreadFt: 1.5, heightFt: 1, sun: 'part-shade', notes: 'Native groundcover; white spring spikes.' },
@@ -179,7 +179,8 @@ export const EXISTING = [
 export const CATEGORIES = [
   { id: 'tree', label: 'Trees', singular: 'tree', color: '#1b5e20' },
   { id: 'shrub', label: 'Shrubs', singular: 'shrub', color: '#43a047' },
-  { id: 'flower', label: 'Flowers & bulbs', singular: 'flower group', color: '#d81b60' },
+  { id: 'grass', label: 'Grasses', singular: 'grass', color: '#c9a227' },
+  { id: 'flower', label: 'Flowers', singular: 'flower group', color: '#d81b60' },
   { id: 'existing', label: 'Existing', singular: 'existing feature', color: '#6d6d6d' },
 ];
 
@@ -188,7 +189,7 @@ export const plantById = (id) => ALL_ITEMS.find((p) => p.id === id) || null;
 
 // Years a plant typically needs to reach the listed mature spread. Used
 // by the maturity slider; linear growth is close enough for a sketch.
-export const YEARS_TO_MATURE = { tree: 15, shrub: 7, flower: 3, existing: 0 };
+export const YEARS_TO_MATURE = { tree: 15, shrub: 7, grass: 3, flower: 3, existing: 0 };
 
 export const SUN_OPTIONS = [
   { id: 'full', label: 'Full sun', hint: '6+ hours of direct sun' },

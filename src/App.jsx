@@ -6,7 +6,7 @@ import SketchStage from './components/SketchStage.jsx';
 import ReviewStage from './components/ReviewStage.jsx';
 import PhotosStage from './components/PhotosStage.jsx';
 import CompleteStage from './components/CompleteStage.jsx';
-import { newDesign, reducer, canEnterStage, maxReachableStage, STAGES, upgradeDesign } from './lib/design.js';
+import { newDesign, reducer, canEnterStage, maxReachableStage, STAGES, upgradeDesign, cryptoId } from './lib/design.js';
 import PlantsStage from './components/PlantsStage.jsx';
 import { loadDesign, saveDesign, clearDesign, clearAllPhotos, storageAvailable } from './lib/storage.js';
 import { consumeTransferFromUrl, transferUrl, safariSchemeUrl, detectEnvironment } from './lib/transfer.js';
@@ -73,6 +73,11 @@ export default function App() {
   const onEditBed = (bedId, action) => {
     setEditEntry({ bedId, action, nonce: editEntry.nonce + 1 });
     dispatch({ type: 'setStage', stage: 'sketch' });
+  };
+  const onAddBed = () => {
+    const id = cryptoId();
+    dispatch({ type: 'addBed', id });
+    onEditBed(id, 'redraw');
   };
   const startNew = async () => {
     clearDesign();
@@ -151,10 +156,10 @@ export default function App() {
         {stage === 'beds' && <BedsStage design={design} dispatch={dispatch} />}
         {stage === 'location' && <LocationStage design={design} dispatch={dispatch} />}
         {stage === 'sketch' && <SketchStage key={editEntry.nonce} design={design} dispatch={dispatch} initialBedId={editEntry.bedId} initialAction={editEntry.action} />}
-        {stage === 'review' && <ReviewStage design={design} dispatch={dispatch} onEditBed={onEditBed} />}
+        {stage === 'review' && <ReviewStage design={design} dispatch={dispatch} onEditBed={onEditBed} onAddBed={onAddBed} />}
         {stage === 'photos' && <PhotosStage design={design} dispatch={dispatch} onOpenInSafari={openInSafari} />}
         {stage === 'plants' && <PlantsStage design={design} dispatch={dispatch} />}
-        {stage === 'complete' && <CompleteStage design={design} dispatch={dispatch} onEditBed={onEditBed} onStartNew={() => setConfirmNew(true)} />}
+        {stage === 'complete' && <CompleteStage design={design} dispatch={dispatch} onEditBed={onEditBed} onAddBed={onAddBed} onStartNew={() => setConfirmNew(true)} />}
       </main>
 
       {showResume && (
