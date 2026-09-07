@@ -172,6 +172,8 @@ export default function PlantsStage({ design, dispatch }) {
         plants={plants}
         selectedPlantId={selected}
         placing={!!placing}
+        placingPlantId={placing}
+        placingSpreadFt={placingInfo?.category === 'existing' ? placeWidth || placingInfo.spreadFt : null}
         growthYears={growthYears}
         onPlacePlant={placing ? place : undefined}
         onSelectPlant={(id) => {

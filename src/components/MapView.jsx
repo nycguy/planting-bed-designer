@@ -100,6 +100,8 @@ const MapView = forwardRef(function MapView(
     plants = [],
     selectedPlantId = null,
     placing = false,
+    placingPlantId = null, // plant being placed: a ghost footprint follows the pointer
+    placingSpreadFt = null,
     growthYears = null, // null = mature; number = years after planting
     showScale = false,
     onPlacePlant,
@@ -517,6 +519,41 @@ const MapView = forwardRef(function MapView(
     m.on('zoomend', relabel);
     return () => m.off('zoomend', relabel);
   }, [plants, selectedPlantId, mode, placing, growthYears]);
+
+  // Ghost footprint: while placing, a translucent circle (or drift) at the
+  // plant's mature spread follows the pointer so the user sees exactly how
+  // much ground the plant will take before tapping. Pointer devices only.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    const info = placingPlantId ? plantById(placingPlantId) : null;
+    if (!info || !placing) return;
+    const cat = categoryById(info.category);
+    const style = { color: cat.color, weight: 2, opacity: 0.9, dashArray: '4 6', fillColor: cat.color, fillOpacity: 0.18, interactive: false };
+    const spreadFt = placingSpreadFt || info.spreadFt;
+    let ghost = null;
+    const build = (ll) => (info.category === 'flower' ? L.polygon(driftShape([ll.lat, ll.lng], 'ghost'), style) : L.circle(ll, { ...style, radius: (spreadFt * 0.3048) / 2 }));
+    const onMove = (e) => {
+      if (!ghost) ghost = build(e.latlng).addTo(m);
+      else if (ghost.setLatLng) ghost.setLatLng(e.latlng);
+      else ghost.setLatLngs(driftShape([e.latlng.lat, e.latlng.lng], 'ghost'));
+    };
+    const onOut = () => {
+      if (ghost) {
+        ghost.remove();
+        ghost = null;
+      }
+    };
+    m.on('mousemove', onMove);
+    m.on('mouseout', onOut);
+    el.current?.classList.add('ghosting');
+    return () => {
+      m.off('mousemove', onMove);
+      m.off('mouseout', onOut);
+      onOut();
+      el.current?.classList.remove('ghosting');
+    };
+  }, [placing, placingPlantId, placingSpreadFt]);
 
   // Re-measure after layout changes (bottom sheet expand/collapse).
   useEffect(() => {

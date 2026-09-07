@@ -410,3 +410,6 @@ input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; ov
 @media (min-width: 1280px) {
   .maplayout { --panel-w: 500px; }
 }
+
+/* While a ghost footprint follows the pointer, shrink the cursor to a dot so the footprint is what you read. */
+.leaflet-container.placing.ghosting, .leaflet-container.placing.ghosting .leaflet-interactive, .leaflet-container.placing.ghosting .leaflet-grab, .leaflet-container.placing.ghosting path { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='4' fill='%23e5322d' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E") 8 8, crosshair !important; }
