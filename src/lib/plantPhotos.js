@@ -2,7 +2,7 @@
 // no key). Looked up by genus + species from the botanical name. Results are
 // cached in memory and localStorage so a plant is fetched once per device.
 
-const CACHE_KEY = 'pbd:plantphotos:v1';
+const CACHE_KEY = 'pbd:plantphotos:v2'; // v2 adds the large size
 const mem = new Map();
 let disk = null;
 function loadDisk() {
@@ -51,7 +51,16 @@ export async function plantPhoto(plant, { signal } = {}) {
     if (res.ok) {
       const j = await res.json();
       const src = j.thumbnail?.source || null;
-      if (src) result = { src, page: j.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`, title: j.title || title };
+      if (src) {
+        // Wikipedia thumbnail URLs can be re-sized by changing the "NNNpx-"
+        // segment, but only down from the original; asking for more than the
+        // original width returns an error, so cap at the original.
+        const origW = j.originalimage?.width || 0;
+        let large = src;
+        if (/\/\d+px-/.test(src) && origW >= 640) large = src.replace(/\/\d+px-/, '/640px-');
+        else if (j.originalimage?.source && origW > 0 && origW < 640) large = j.originalimage.source;
+        result = { src, large, page: j.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`, title: j.title || title };
+      }
     }
   } catch (e) {
     if (e.name === 'AbortError') throw e;

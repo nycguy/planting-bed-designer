@@ -26,7 +26,7 @@ export function PlantHover({ plant, children, className, style, as: Tag = 'span'
   const photo = usePhoto(plant);
   const [pos, setPos] = useState(null);
   if (!plant || plant.category === 'existing') return <Tag className={className} style={style} {...rest}>{children}</Tag>;
-  const large = photo ? photo.src.replace(/\/(\d+)px-/, '/640px-') : null;
+  const large = photo ? photo.large || photo.src : null;
   const onEnter = (e) => {
     if (!hasHover()) return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -39,7 +39,18 @@ export function PlantHover({ plant, children, className, style, as: Tag = 'span'
       {children}
       {pos && (
         <span className="plantpreview" style={{ left: pos.x, top: pos.y }} role="presentation">
-          {large ? <img src={large} alt="" /> : <span className="plantpreview-empty">No photo available</span>}
+          {large ? (
+            <img
+              src={large}
+              alt=""
+              onError={(e) => {
+                // Fall back to the small thumbnail if the larger size fails.
+                if (photo?.src && e.currentTarget.src !== photo.src) e.currentTarget.src = photo.src;
+              }}
+            />
+          ) : (
+            <span className="plantpreview-empty">{photo === undefined ? 'Loading photo…' : 'No photo available'}</span>
+          )}
           <small>
             <b>{plant.name}</b> — <i>{plant.botanical}</i>
             {plant.heightFt ? ` · ${plant.heightFt} ft H × ${plant.spreadFt} ft W` : ''}
