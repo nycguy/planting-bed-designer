@@ -118,7 +118,7 @@ const MapView = forwardRef(function MapView(
   cb.current = { onViewChange, onAddPoint, onMoveVertex, onSelectVertex, onInsertPoint, onSelectBed, onImageryError, onPreviewLength, onPlacePlant, onSelectPlant, onMovePlant };
   const plantLayers = useRef(null);
   const stateRef = useRef({});
-  stateRef.current = { beds, activeBedId, mode };
+  stateRef.current = { beds, activeBedId, mode, placing };
   // Layers of the active bed, updated imperatively while a vertex is dragged.
   const live = useRef({ poly: null, labels: [], mids: [], pts: [] });
 
@@ -281,7 +281,13 @@ const MapView = forwardRef(function MapView(
     if (!m || !g) return;
     g.clearLayers();
     live.current = { poly: null, labels: [], mids: [], pts: [] };
-    el.current?.classList.toggle('drawing', mode === 'draw' || (mode === 'plant' && !!cb.current.onPlacePlant));
+    const c = el.current?.classList;
+    if (c) {
+      c.toggle('drawing', mode === 'draw');
+      c.toggle('editing', mode === 'edit');
+      c.toggle('viewing', mode === 'view');
+      c.toggle('panning', mode === 'view' || mode === 'edit');
+    }
     if (mode !== 'draw') {
       preview.current.remove();
       previewLabel.current.remove();
@@ -299,7 +305,7 @@ const MapView = forwardRef(function MapView(
           weight: active ? 4 : 3,
           opacity,
           fillColor: bed.color,
-          fillOpacity: mode === 'view' ? 0.3 : active ? 0.28 : 0.15,
+          fillOpacity: mode === 'view' ? 0.3 : mode === 'plant' ? 0.08 : active ? 0.28 : 0.15,
           dashArray: bed.closed ? null : '8 8',
           interactive: mode !== 'draw' && !!cb.current.onSelectBed,
         });
@@ -317,6 +323,8 @@ const MapView = forwardRef(function MapView(
 
       // In view mode (Review, report) show one label per bed instead of
       // per-side lengths, which would clutter a map of the whole yard.
+      // In plant mode show no bed labels at all; the plants are the subject.
+      if (mode === 'plant') continue;
       if (mode === 'view') {
         if (pts.length >= 3 && bed.closed) {
           const c = L.polygon(pts).getBounds().getCenter();
@@ -416,9 +424,8 @@ const MapView = forwardRef(function MapView(
     if (!m || !g) return;
     g.clearLayers();
     const editable = mode === 'plant';
-    // While a plant is being placed, existing plants must not intercept
-    // taps: a new shrub can go inside a tree's canopy circle.
-    const selectable = editable && !placing;
+    el.current?.classList.toggle('placing', editable && !!placing);
+    el.current?.classList.toggle('panning', editable && !placing);
     for (const pl of plants) {
       const info = plantById(pl.plantId);
       if (!info) continue;
@@ -431,7 +438,7 @@ const MapView = forwardRef(function MapView(
         opacity: 0.95,
         fillColor: cat.color,
         fillOpacity: selected ? 0.5 : 0.32,
-        interactive: selectable,
+        interactive: editable,
         bubblingMouseEvents: false,
       };
       let shape;
@@ -443,9 +450,13 @@ const MapView = forwardRef(function MapView(
         const factor = growthYears == null || !yrs ? 1 : Math.max(0.12, Math.min(1, growthYears / yrs));
         shape = L.circle(center, { ...style, radius: (spreadFt * factor * 0.3048) / 2, dashArray: info.category === 'existing' ? '6 6' : null });
       }
+      // A tap on an existing plant selects it — unless a new plant is being
+      // placed, in which case the tap adds the new plant right there. This
+      // is what lets a shrub go inside a tree's canopy circle.
       shape.on('click', (e) => {
         L.DomEvent.stop(e);
-        cb.current.onSelectPlant?.(pl.id);
+        if (stateRef.current.placing && cb.current.onPlacePlant) cb.current.onPlacePlant([e.latlng.lat, e.latlng.lng]);
+        else cb.current.onSelectPlant?.(pl.id);
       });
       shape.addTo(g);
 

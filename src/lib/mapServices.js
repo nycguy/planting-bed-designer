@@ -50,17 +50,24 @@ export function rankSuggestions(items) {
   return items.slice().sort((a, b) => a.regionRank - b.regionRank || Number(b.isAddress) - Number(a.isAddress));
 }
 
-export async function suggestAddresses(query, { signal, bias } = {}) {
-  const q = query.trim();
-  if (q.length < 3) return [];
+// Search in three passes so New York always comes first: New York State
+// only, then the continental United States, then the world. Each pass is
+// a Photon bbox query; later passes run only while there is still room in
+// the list. Results are de-duplicated on coordinates.
+const NY_BBOX = '-79.8,40.45,-71.8,45.05';
+const US_BBOX = '-125,24,-66,49.6';
+const WANT = 8;
+
+async function photonQuery(q, { signal, bbox, bias }) {
   const url = new URL(PHOTON);
   url.searchParams.set('q', q);
   url.searchParams.set('limit', '10');
   url.searchParams.set('lang', 'en');
+  if (bbox) url.searchParams.set('bbox', bbox);
   const b = bias || HOME_BIAS;
   url.searchParams.set('lat', b.lat);
   url.searchParams.set('lon', b.lng);
-  url.searchParams.set('location_bias_scale', '0.4');
+  url.searchParams.set('location_bias_scale', bbox ? '0.2' : '0.5');
   url.searchParams.set('zoom', '9');
   let res;
   try {
@@ -72,7 +79,26 @@ export async function suggestAddresses(query, { signal, bias } = {}) {
   if (res.status === 429) throw new GeocodeError('Too many searches in a short time. Wait a moment and try again.', 'limit');
   if (!res.ok) throw new GeocodeError('Address search failed. Try again.', 'network');
   const data = await res.json();
-  return rankSuggestions((data.features || []).map(formatPhoton));
+  return (data.features || []).map(formatPhoton);
+}
+
+export async function suggestAddresses(query, { signal, bias } = {}) {
+  const q = query.trim();
+  if (q.length < 3) return [];
+  const seen = new Set();
+  const out = [];
+  const add = (items) => {
+    for (const it of items) {
+      const k = `${it.lat.toFixed(5)},${it.lng.toFixed(5)}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(it);
+    }
+  };
+  add(await photonQuery(q, { signal, bbox: NY_BBOX, bias }));
+  if (out.length < WANT) add(await photonQuery(q, { signal, bbox: US_BBOX, bias }));
+  if (out.length < WANT) add(await photonQuery(q, { signal, bias }));
+  return rankSuggestions(out).slice(0, 12);
 }
 
 export async function geocodeOnce(query, { signal } = {}) {
