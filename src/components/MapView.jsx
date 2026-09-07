@@ -481,14 +481,19 @@ const MapView = forwardRef(function MapView(
       });
       shape.addTo(g);
 
-      // Label: short name, only when zoomed in enough to read.
-      if (m.getZoom() >= 19 || selected) {
-        L.marker(center, {
-          icon: L.divIcon({ className: '', html: `<div class="plantlabel" style="--c:${cat.color}">${escapeHtml(info.name)}</div>`, iconSize: [0, 0] }),
-          interactive: false,
-          keyboard: false,
-        }).addTo(g);
-      }
+      // Labels: trees and shrubs are labeled from zoom 19; small plants
+      // (grasses, flowers, existing) only from zoom 21, where a drift is
+      // wide enough to carry a label without piling on its neighbors. The
+      // selected plant is always labeled.
+      const big = info.category === 'tree' || info.category === 'shrub';
+      const minLabelZoom = big ? 19 : 21;
+      L.marker(center, {
+        icon: L.divIcon({ className: '', html: `<div class="plantlabel ${big ? 'big' : 'small'}" data-minzoom="${minLabelZoom}" style="--c:${cat.color}">${escapeHtml(info.name)}</div>`, iconSize: [0, 0] }),
+        interactive: false,
+        keyboard: false,
+        opacity: selected || m.getZoom() >= minLabelZoom ? 1 : 0,
+        zIndexOffset: selected ? 500 : big ? 100 : 0,
+      }).addTo(g);
 
       // Drag handle for the selected plant.
       if (editable && selected) {
@@ -511,9 +516,14 @@ const MapView = forwardRef(function MapView(
       }
     }
     const relabel = () => {
-      // Re-run to show/hide labels as zoom crosses the threshold.
+      // Show/hide labels as zoom crosses each label's threshold.
+      const z = m.getZoom();
       g.eachLayer((l) => {
-        if (l instanceof L.Marker && l.options.icon?.options?.html?.includes('plantlabel')) l.setOpacity(m.getZoom() >= 19 ? 1 : 0);
+        const html = l.options.icon?.options?.html;
+        if (!(l instanceof L.Marker) || !html?.includes('plantlabel')) return;
+        const mz = Number(html.match(/data-minzoom="(\d+)"/)?.[1] || 19);
+        const isSel = selectedPlantId && html.includes('plantlabel') && l.getLatLng && plants.some((p) => p.id === selectedPlantId && Math.abs(p.lat - l.getLatLng().lat) < 1e-9 && Math.abs(p.lng - l.getLatLng().lng) < 1e-9);
+        l.setOpacity(isSel || z >= mz ? 1 : 0);
       });
     };
     m.on('zoomend', relabel);

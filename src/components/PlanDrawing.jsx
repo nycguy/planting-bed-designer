@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { localFrame, sceneBeds, scenePlants, seeded, foliageColor, inBloom, sizeAt, FT } from '../lib/scene.js';
 import { CATEGORIES, MONTHS } from '../data/plants.js';
 import { fmtSqFt, summarize } from '../lib/geometry.js';
+import { imageryById, tileIndex, tileBoundsLatLng, tileUrl } from '../lib/mapServices.js';
 
 // A landscape-plan drawing at true scale: beds as mulched shapes, plants as
 // stylized canopy symbols sized to mature spread, a keyed plant list, scale
@@ -101,13 +102,28 @@ export function buildPlan(design, { years = null, month = 6 } = {}) {
       else d = crownPath(cx, cy, r, p.id, p.form === 'tree' ? 7 : 5);
       return { ...p, cx, cy, r, d, color, code, bloom: inBloom(p.info, month) && p.info.bloomColor };
     });
-  return { frame, beds, plants: symbols, key, W, H, X, Y, pxPerM: PX_PER_M };
+  // Aerial imagery tiles covering the sheet, positioned in sheet pixels.
+  const src = imageryById(design.location?.imagery);
+  const z = bbox.w < 25 ? 21 : 20;
+  const nw = frame.fromLocal({ x: bbox.minX, y: bbox.maxY });
+  const se = frame.fromLocal({ x: bbox.maxX, y: bbox.minY });
+  const ta = tileIndex(nw[0], nw[1], z), tb = tileIndex(se[0], se[1], z);
+  const tiles = [];
+  for (let ty = Math.floor(ta.y); ty <= Math.floor(tb.y); ty++) {
+    for (let tx = Math.floor(ta.x); tx <= Math.floor(tb.x); tx++) {
+      const tbnd = tileBoundsLatLng(tx, ty, z);
+      const p0 = frame.toLocal([tbnd.north, tbnd.west]);
+      const p1 = frame.toLocal([tbnd.south, tbnd.east]);
+      tiles.push({ key: `${z}/${tx}/${ty}`, href: tileUrl(src, tx, ty, z), x: X(p0.x), y: Y(p0.y), w: X(p1.x) - X(p0.x), h: Y(p1.y) - Y(p0.y) });
+    }
+  }
+  return { frame, beds, plants: symbols, key, W, H, X, Y, pxPerM: PX_PER_M, tiles: tiles.length <= 80 ? tiles : [], imageryName: src.name };
 }
 
-export default function PlanDrawing({ design, years = null, month = 6, showKey = true, showLabels = true, id = 'plan-svg' }) {
+export default function PlanDrawing({ design, years = null, month = 6, showKey = true, showLabels = true, imagery = true, id = 'plan-svg' }) {
   const plan = useMemo(() => buildPlan(design, { years, month }), [design, years, month]);
   if (!plan) return <p className="hint">Draw at least one bed to see a plan.</p>;
-  const { beds, plants, key, W, H, X, Y, pxPerM } = plan;
+  const { beds, plants, key, W, H, X, Y, pxPerM, tiles, imageryName } = plan;
   const KEY_W = showKey && key.length ? 260 : 0;
   const PAD = 24;
   const totalW = W + KEY_W + PAD * 2;
@@ -142,14 +158,27 @@ export default function PlanDrawing({ design, years = null, month = 6, showKey =
       </defs>
       <rect width={totalW} height={totalH} fill="#fbfaf6" />
       <g transform={`translate(${PAD} ${PAD})`}>
-        <rect width={W} height={H} fill="url(#lawn)" stroke="#8a9a7a" strokeWidth="1" />
+        <clipPath id="sheet">
+          <rect width={W} height={H} />
+        </clipPath>
+        <rect width={W} height={H} fill="url(#lawn)" />
+        {imagery && (
+          <g clipPath="url(#sheet)" className="plan-imagery">
+            {tiles.map((t) => (
+              <image key={t.key} href={t.href} x={t.x} y={t.y} width={t.w} height={t.h} preserveAspectRatio="none" />
+            ))}
+            {/* light wash so symbols and text stay legible over the photo */}
+            <rect width={W} height={H} fill="#fff" opacity="0.12" />
+          </g>
+        )}
+        <rect width={W} height={H} fill="none" stroke="#8a9a7a" strokeWidth="1" />
         {/* Beds */}
         {beds.map((b) => {
           const d = `M${b.local.map((p) => `${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('L')}Z`;
           const c = b.local.reduce((a, p) => ({ x: a.x + p.x / b.local.length, y: a.y + p.y / b.local.length }), { x: 0, y: 0 });
           return (
             <g key={b.id}>
-              <path d={d} fill="url(#mulch)" stroke={b.color} strokeWidth="3" strokeLinejoin="round" />
+              <path d={d} fill="url(#mulch)" fillOpacity={imagery ? 0.55 : 1} stroke={b.color} strokeWidth="3" strokeLinejoin="round" />
               {showLabels && (
                 <text x={X(c.x)} y={Y(c.y)} className="plan-bedlabel" textAnchor="middle" dominantBaseline="middle" fill={b.color} stroke="#fff" strokeWidth="3" paintOrder="stroke" fontSize="14" fontWeight="700">
                   {b.name} · {fmtSqFt(summarize(b.points).areaSqFt)}
@@ -230,7 +259,7 @@ export default function PlanDrawing({ design, years = null, month = 6, showKey =
       <g transform={`translate(${PAD} ${totalH - 22})`} fontSize="10" fill="#333">
         <text>
           {design.location?.address || 'Planting plan'} · 1 ft = {(FT * pxPerM).toFixed(1)} units · {years ? `Year ${years}` : 'At maturity'} · {MONTHS[month - 1]}
-          {design.zone?.zone ? ` · USDA zone ${design.zone.zone}` : ''} · Drawn {new Date().toLocaleDateString()}
+          {design.zone?.zone ? ` · USDA zone ${design.zone.zone}` : ''}{imagery ? ` · Imagery: ${imageryName}` : ''} · Drawn {new Date().toLocaleDateString()}
         </text>
       </g>
     </svg>
@@ -241,7 +270,32 @@ export default function PlanDrawing({ design, years = null, month = 6, showKey =
 export async function downloadPlan(svgId, format = 'png', name = 'planting-plan') {
   const svg = document.getElementById(svgId);
   if (!svg) return;
-  const xml = new XMLSerializer().serializeToString(svg);
+  // Rasterizing an SVG that references remote images is blocked by browsers,
+  // so for PNG (and for a self-contained SVG) fetch each tile and inline it.
+  // Tiles whose server refuses cross-origin reads are dropped from the export.
+  const clone = svg.cloneNode(true);
+  const imgs = [...clone.querySelectorAll('image')];
+  await Promise.all(
+    imgs.map(async (im) => {
+      const href = im.getAttribute('href');
+      if (!href || href.startsWith('data:')) return;
+      try {
+        const res = await fetch(href, { mode: 'cors', referrerPolicy: 'no-referrer' });
+        if (!res.ok) throw new Error(res.status);
+        const b = await res.blob();
+        const dataUrl = await new Promise((ok, no) => {
+          const r = new FileReader();
+          r.onload = () => ok(r.result);
+          r.onerror = no;
+          r.readAsDataURL(b);
+        });
+        im.setAttribute('href', dataUrl);
+      } catch {
+        im.remove();
+      }
+    }),
+  );
+  const xml = new XMLSerializer().serializeToString(clone);
   const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
   const trigger = (href, ext) => {
     const a = document.createElement('a');
@@ -302,11 +356,15 @@ export function PlanControls({ years, setYears, month, setMonth }) {
 export function PlanDrawingPanel({ design }) {
   const [years, setYears] = useState(null);
   const [month, setMonth] = useState(6);
+  const [imagery, setImagery] = useState(true);
   const wrap = useRef(null);
   return (
     <section className="plan-panel" aria-label="Plan drawing">
       <div className="plan-toolbar no-print">
         <PlanControls years={years} setYears={setYears} month={month} setMonth={setMonth} />
+        <label className="check">
+          <input type="checkbox" checked={imagery} onChange={(e) => setImagery(e.target.checked)} /> Aerial imagery
+        </label>
         <div className="btn-row" style={{ margin: 0 }}>
           <button type="button" className="btn btn-sm" onClick={() => downloadPlan('plan-svg', 'png')}>
             Download PNG
@@ -317,9 +375,9 @@ export function PlanDrawingPanel({ design }) {
         </div>
       </div>
       <div ref={wrap} className="plan-wrap">
-        <PlanDrawing design={design} years={years} month={month} />
+        <PlanDrawing design={design} years={years} month={month} imagery={imagery} />
       </div>
-      <p className="hint">Symbols are drawn at the listed mature spread (or the chosen age). Bloom color shows for plants in flower in the chosen month. Existing features are dashed.</p>
+      <p className="hint">Symbols are drawn at the listed mature spread (or the chosen age) over the same aerial imagery as the map. Bloom color shows for plants in flower in the chosen month. Existing features are dashed. Turn imagery off for a clean drawing sheet.</p>
       {CATEGORIES.length ? null : null}
     </section>
   );

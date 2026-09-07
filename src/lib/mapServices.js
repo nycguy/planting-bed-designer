@@ -225,3 +225,28 @@ export function bestImageryFor(lat, lng) {
   if (state) return state.id;
   return IMAGERY.find((s) => !s.bounds)?.id || IMAGERY[0].id;
 }
+
+// Web Mercator tile helpers shared by the map and the plan drawing.
+export function tileIndex(lat, lng, z) {
+  const n = 2 ** z;
+  const latR = (lat * Math.PI) / 180;
+  return { x: ((lng + 180) / 360) * n, y: ((1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2) * n };
+}
+export function tileBoundsLatLng(x, y, z) {
+  const n = 2 ** z;
+  const lon = (x / n) * 360 - 180;
+  const lon2 = ((x + 1) / n) * 360 - 180;
+  const lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
+  const lat2 = (Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 1)) / n))) * 180) / Math.PI;
+  return { north: lat, south: lat2, west: lon, east: lon2 };
+}
+// URL of one 256 px tile from a source, whatever its type.
+export function tileUrl(src, x, y, z, size = 256) {
+  if (src.type === 'xyz') return src.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  const R = 6378137;
+  const b = tileBoundsLatLng(x, y, z);
+  const mx = (l) => (l * Math.PI * R) / 180;
+  const my = (l) => Math.log(Math.tan(Math.PI / 4 + (l * Math.PI) / 360)) * R;
+  const q = new URLSearchParams({ f: 'image', format: 'jpg', bboxSR: '3857', imageSR: '3857', size: `${size},${size}`, bbox: `${mx(b.west)},${my(b.south)},${mx(b.east)},${my(b.north)}`, ...(src.type === 'arcgis-image' ? {} : { transparent: 'false', dpi: '96' }), ...(src.params || {}) });
+  return `${src.url}/${src.type === 'arcgis-image' ? 'exportImage' : 'export'}?${q}`;
+}

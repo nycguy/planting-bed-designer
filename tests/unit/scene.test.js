@@ -74,5 +74,11 @@ describe('plan drawing', () => {
     expect(html).toContain('Kousa Dogwood');
     expect((html.match(/<path /g) || []).length).toBeGreaterThan(5);
     expect(html).toContain('10 ft'); // scale bar
+    // Aerial tiles are placed under the drawing and reference the design's imagery source.
+    expect(plan.tiles.length).toBeGreaterThan(0);
+    expect(plan.tiles[0].href).toContain('orthos.its.ny.gov');
+    expect(html).toContain('<image ');
+    const off = renderToStaticMarkup(React.createElement(PlanDrawing, { design: d, imagery: false }));
+    expect(off).not.toContain('<image ');
   });
 });

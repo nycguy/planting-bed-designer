@@ -36,7 +36,7 @@ export default function PlantsStage({ design, dispatch }) {
   const [detail, setDetail] = useState(null);
   const [growthIdx, setGrowthIdx] = useState(GROWTH_STOPS.length - 1);
   const [showBloom, setShowBloom] = useState(false);
-  const [showViz, setShowViz] = useState(null); // 'plan' | '3d' | null
+  const [showViz, setShowViz] = useState(null); // 'plan' | null
 
   // Undo / redo over the plants array.
   const past = useRef([]);
@@ -204,8 +204,8 @@ export default function PlantsStage({ design, dispatch }) {
           ⤢
         </button>
         {plants.length > 0 && !placing && !selected && (
-          <button type="button" className="mapbtn text" onClick={() => setShowViz('3d')} title="See the design in 3D" data-testid="open-3d">
-            3D
+          <button type="button" className="mapbtn text" onClick={() => setShowViz('plan')} title="Plan drawing of the design" data-testid="open-plan">
+            Plan
           </button>
         )}
         {(placing || selected) && (
@@ -465,7 +465,7 @@ export default function PlantsStage({ design, dispatch }) {
       {showViz && (
         <div className="vizoverlay" role="dialog" aria-label="Visualize the design">
           <div className="vizoverlay-bar">
-            <b>See the design</b>
+            <b>Plan drawing</b>
             <button type="button" className="btn btn-sm" onClick={() => setShowViz(null)}>
               Back to editing
             </button>
