@@ -228,23 +228,38 @@ const MapView = forwardRef(function MapView(
     const src = imageryById(imageryId);
     if (tiles.current) tiles.current.remove();
     let errors = 0;
+    let loaded = 0;
+    const dynamic = src.type === 'arcgis-export' || src.type === 'arcgis-image';
     const opts = {
       maxNativeZoom: src.maxNativeZoom,
       maxZoom: 22,
       attribution: src.attribution,
       crossOrigin: src.crossOrigin !== false,
+      // Government map servers sometimes refuse images that arrive with a
+      // third-party Referer; sending none matches opening the URL directly.
+      referrerPolicy: 'no-referrer',
       bounds: src.bounds ? L.latLngBounds(src.bounds) : undefined,
+      // Dynamic export services render each tile on request; fetching only
+      // when the map settles and keeping fewer off-screen tiles cuts the
+      // request burst that makes these servers time out.
+      ...(dynamic ? { updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 1 } : {}),
     };
     const t =
       src.type === 'arcgis-export' || src.type === 'arcgis-image'
         ? new ArcGISExportLayer(src.url, { ...opts, imageService: src.type === 'arcgis-image', params: src.params })
         : L.tileLayer(src.url, opts);
-    t.on('tileerror', () => {
+    t.on('tileerror', (ev) => {
       errors += 1;
-      if (errors === 6) cb.current.onImageryError?.(src);
+      // Only report when the source is failing outright, not when a slow
+      // dynamic server drops a few tiles out of many.
+      if (errors >= 6 && loaded === 0) cb.current.onImageryError?.(src);
+      if (import.meta.env?.DEV) console.warn('tile error', ev?.tile?.src);
+    });
+    t.on('tileload', () => {
+      loaded += 1;
     });
     t.on('load', () => {
-      errors = 0;
+      if (loaded > 0) errors = 0;
     });
     t.addTo(m);
     tiles.current = t;
